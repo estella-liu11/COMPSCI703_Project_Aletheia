@@ -1,0 +1,46 @@
+# Docker ignore file
+# Excludes unnecessary files from Docker build context
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.egg-info
+.venv
+venv
+
+# IDE
+.idea
+.vscode
+*.swp
+
+# Environment
+.env
+.env.*
+secrets.toml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs
+
+# Documentation (not needed in container)
+README.md
+TECH_DOC.md
+IDEA_DOC.md
+*.md
+
+# Test files
+test_*.py
+*_test.py
+
+# Local development files
+.streamlit/config.toml

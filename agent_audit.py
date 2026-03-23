@@ -1,14 +1,18 @@
 import os
+from dotenv import load_dotenv
 from langchain_pinecone import PineconeVectorStore
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import OllamaLLM
+
+# Load environment variables from .env file
+load_dotenv()
 
 # 1. Initialize the "Legal Brain" (Pinecone)
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 vector_store = PineconeVectorStore(
     index_name="aletheia-legal-db",
     embedding=embeddings,
-    pinecone_api_key="pcsk_vwEEW_Nm8c5qsyQ4dHN1itWQfepSATHBk2gnoSMyGzpvQ5abry7j7hTCyS9gGWgNkJshw"
+    pinecone_api_key=os.getenv("PINECONE_API_KEY"),
 )
 
 # 2. Initialize the LLM (Llama 3.2)
@@ -25,8 +29,7 @@ def run_audit(contract_segment):
     # fetch_k=20: Look at the top 20 candidates globally.
     # k=3: Select the 3 most relevant but DIVERSE chunks to avoid redundancy.
     retriever = vector_store.as_retriever(
-        search_type="mmr",
-        search_kwargs={'k': 3, 'fetch_k': 20}
+        search_type="mmr", search_kwargs={"k": 3, "fetch_k": 20}
     )
 
     docs = retriever.invoke(contract_segment)

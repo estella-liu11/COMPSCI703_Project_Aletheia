@@ -1,0 +1,45 @@
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Environment Variables (contains sensitive data)
+.env
+.streamlit/secrets.toml
+
+# Streamlit
+.streamlit/
+cache/
+
+# Logs
+*.log
+
+# Model files (if any large files)
+*.bin
+*.pt
+*.pth
+
+# Data files (exclude large PDFs, keep test files)
+DATA-library/*.pdf
+DATA-library/*.docx
+DATA-library/*.txt
+!DATA-library/test.pdf
