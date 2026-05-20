@@ -1,39 +1,61 @@
-# 🛡️ Aletheia: Agentic Financial Compliance Auditor
+# 🛡️ Aletheia: HITL Multi-Agent Compliance Auditor
 
-**Aletheia** (Greek: "Truth") is an advanced AI-driven compliance system designed to audit financial contracts against complex regulatory frameworks. It implements a **Multi-Stage Agentic RAG** architecture, specifically optimized to minimize legal hallucinations and ensure source-grounded accuracy.
+**Aletheia** (Greek: "Truth") is an AI-driven compliance system that audits financial
+contracts against NZ–US cross-border tax regulations. It uses a
+**Multi-Agent RAG + Human-in-the-Loop (HITL)** architecture, with an independent
+citation re-retrieval step in the Chief Officer to minimise legal hallucinations.
 
 ---
 
 ## 🎯 Project Overview
 
-This project addresses the challenge of **expensive cross-border contract auditing** by leveraging AI agents to automate compliance verification. By using a dual-agent reflection loop, Aletheia significantly reduces legal hallucinations common in traditional RAG systems.
+Cross-border contract auditing is expensive and slow. Traditional single-pass RAG
+systems hallucinate citations and miss obligations from different angles. Aletheia
+fixes this with:
+
+1. **Two parallel Junior Auditors** with opposing mindsets (Risk Hunter / Compliance Maven)
+2. **A human adjudication step** — the user decides which auditor(s) to trust
+3. **A self-verifying Chief Officer** that re-retrieves each citation independently
+   from the vector DB before signing off
+4. **A separate Quick Q&A mode** for ad-hoc regulatory questions (no upload needed)
 
 ---
 
-## 🧠 Core AGI Concepts
+## 🧠 Core Concepts
 
-### 1. System 2 Thinking (Slow Reasoning)
-Most LLMs operate on "System 1" (fast, intuitive but error-prone). Aletheia forces **System 2 thinking** by breaking the audit into:
-1. **Retrieval Stage** - Diverse context gathering via MMR
-2. **Analysis Stage** - Junior Auditor initial assessment
-3. **Reflection Stage** - Chief Compliance Officer rigorous review
+### 1. Dual-Junior Adversarial Audit
+Two Junior agents read the same contract + the same regulatory context, but with
+opposite framings:
 
-### 2. Agentic Reflection Loop
-The system utilizes a **Junior Auditor → Chief Compliance Officer** workflow:
-- **Junior Auditor**: Performs initial contract analysis against regulatory basis
-- **Chief Compliance Officer**: Reviews the junior's findings, filters hallucinations, and provides verified recommendations
+| Agent | Role | Output |
+|-------|------|--------|
+| 🔴 **Risk Hunter** (Junior A) | Assume contract has hidden violations | `[Risk #N]` items |
+| 🔵 **Compliance Maven** (Junior B) | Assume contract is missing required clauses | `[Gap #N]` items |
 
-### 3. Diversity-Aware Retrieval (MMR)
-To avoid "Information Redundancy," the system uses **Maximal Marginal Relevance (MMR)**:
-- Scans a candidate pool of 20 vector segments
-- Selects the top 3 most diverse snippets
-- Ensures AI considers multiple regulatory angles simultaneously
+### 2. Human-in-the-Loop Adjudication
+After the Juniors finish, the UI shows both outputs side-by-side. The user picks
+one of four routes before the Chief Officer runs:
 
-### 4. Hallucination Reduction
-Unlike traditional RAG systems, Aletheia implements **STRICT SOURCE GROUNDING**:
-- All findings must be traceable to regulatory documents
-- Chief Officer rejects unsupported claims
-- Numerical values are cross-verified
+- `BOTH` — merge findings from both, flag contradictions
+- `ONLY_A` — trust only the Risk Hunter
+- `ONLY_B` — trust only the Compliance Maven
+- `NEITHER` — escalate to a human reviewer (no AI final report generated)
+
+### 3. Self-Verifying Chief Officer
+The Chief Officer does **not** trust the Juniors' citations. For every citation
+extracted from the selected Junior(s), it independently re-queries Pinecone for
+the top-3 most relevant chunks (`re_retrieve_citations()`), then classifies each
+citation as `✅ VERIFIED`, `⚠️ PARTIAL`, or `❌ UNVERIFIED` in the final report.
+
+### 4. MMR Diversity Retrieval
+Initial context retrieval uses Maximal Marginal Relevance to avoid redundant chunks:
+
+```python
+retriever = vector_store.as_retriever(
+    search_type="mmr",
+    search_kwargs={"k": 5, "fetch_k": 20},
+)
+```
 
 ---
 
@@ -41,11 +63,11 @@ Unlike traditional RAG systems, Aletheia implements **STRICT SOURCE GROUNDING**:
 
 | Layer | Technology |
 |-------|------------|
-| **LLM (Brain)** | Llama 3.2 (via Ollama, local inference) |
-| **Vector DB (Memory)** | Pinecone (Serverless, 384 dimensions) |
+| **LLM** | Llama 3.2 via Ollama (local, `temperature=0`) |
+| **Vector DB** | Pinecone Serverless, index `aletheia-legal-db` (384-dim) |
 | **Embeddings** | HuggingFace `all-MiniLM-L6-v2` |
-| **Orchestration** | LangChain (Agentic Workflows) |
-| **UI** | Streamlit |
+| **Orchestration** | LangChain (Pinecone + Ollama + HuggingFace integrations) |
+| **UI** | Streamlit (two tabs: Contract Audit / Quick Q&A) |
 | **Language** | Python 3.13+ |
 
 ---
@@ -53,27 +75,26 @@ Unlike traditional RAG systems, Aletheia implements **STRICT SOURCE GROUNDING**:
 ## 📁 Project Structure
 
 ```
-Aletheia/
-├── app.py                 # Streamlit Web Application
-├── agent_audit.py        # Core Agentic Audit Engine
-├── ingest.py             # Data Ingestion Pipeline
-├── test_security.py      # Security & Poison Testing ⭐
-├── test_brain.py         # LLM Connection Test
-├── requirements.txt       # Python Dependencies
-├── .env.example          # Environment Variables Template
-├── .gitignore           # Git Ignore Rules
-├── Dockerfile            # Docker Container ⭐
-├── docker-compose.yml    # Docker Compose ⭐
-├── .github/
-│   └── workflows/
-│       ├── test.yml     # CI: Automated Testing ⭐
-│       └── docker.yml    # CD: Docker Build ⭐
-├── README.md            # This File
-├── TECH_DOC.md          # Technical Architecture
-├── DATA-library/        # Regulatory Documents
-│   └── test.pdf        # Sample Test Data
-└── .streamlit/
-    └── config.toml      # Streamlit Configuration
+COMPSCI703_Project/
+├── app.py                       # Streamlit UI — two tabs (Audit + Quick Q&A)
+├── agent_audit.py               # Core engine: dual juniors + verifying chief + quick QA
+├── agent_audit_baseline.py      # Old single-junior version (used only by evaluation)
+├── ingest.py                    # PDF → cleaned chunks → Pinecone pipeline
+├── test_data.py                 # 8 test contract fixtures (TC-001…TC-008)
+├── test_evaluation.py           # Baseline-vs-new evaluator + metrics report
+├── requirements.txt
+├── Dockerfile
+├── docker-compose.yml
+├── .env.example                 # PINECONE_API_KEY template
+├── .github/workflows/
+│   ├── test.yml                 # CI: lint + import smoke test
+│   └── docker.yml               # CD: build & push Docker image
+├── DATA-library/                # Regulatory PDFs ingested into Pinecone
+│   ├── Double Taxation Relief (United States of America) Order 1983 …pdf
+│   └── compliance-simplification-bill-act-commentary.pdf
+├── README.md
+├── TECH_DOC.md
+└── IDEA_DOC.md
 ```
 
 ---
@@ -83,148 +104,141 @@ Aletheia/
 ### Prerequisites
 
 - Python 3.13+
-- [Ollama](https://ollama.ai/) installed with Llama 3.2 model
-- A [Pinecone](https://www.pinecone.io/) account (free tier available)
+- [Ollama](https://ollama.ai/) with `llama3.2` pulled
+- A [Pinecone](https://www.pinecone.io/) account (free tier works)
 
 ### Installation
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/estella-liu11/COMPSCI703_Project_Aletheia.git
-   cd COMPSCI703_Project_Aletheia
-   ```
+```bash
+# 1. Clone
+git clone <your-repo-url>
+cd COMPSCI703_Project
 
-2. **Create Virtual Environment**
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
+# 2. Virtual env
+python -m venv .venv
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
 
-3. **Install Dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+# 3. Dependencies
+pip install -r requirements.txt
 
-4. **Setup Ollama**
-   ```bash
-   # Install Ollama from https://ollama.ai
-   ollama pull llama3.2
-   ollama serve
-   ```
+# 4. Ollama
+ollama pull llama3.2
+ollama serve                         # leave running
 
-5. **Configure Environment Variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your Pinecone API Key
-   ```
+# 5. Env vars
+cp .env.example .env
+# edit .env and set PINECONE_API_KEY=...
 
-6. **Ingest Regulatory Documents**
-   ```bash
-   python ingest.py
-   ```
+# 6. Ingest the regulatory PDFs into Pinecone (one-time)
+python ingest.py
 
-7. **Run the Application**
-   ```bash
-   streamlit run app.py
-   ```
+# 7. Run the app
+streamlit run app.py
+```
+
+The app opens at `http://localhost:8501`.
 
 ---
 
 ## 🐳 Docker Deployment
 
-### Using Docker Compose (Recommended)
+The Docker image runs the Streamlit app only. Ollama still has to run on the
+host (or be wired up separately) because `agent_audit.py` connects to it at
+`http://localhost:11434`.
 
 ```bash
-docker-compose up
-```
+# With compose (recommended)
+docker-compose up --build
 
-### Manual Docker Build
-
-```bash
+# Or manual
 docker build -t aletheia .
-docker run -p 8501:8501 aletheia
+docker run -p 8501:8501 --env-file .env aletheia
 ```
 
 ---
 
-## 🧪 Security Testing
+## 🧪 Evaluation Suite
 
-Run the comprehensive security test suite:
+`test_evaluation.py` runs all 8 test contracts in `test_data.py` against both
+the old single-junior baseline (`agent_audit_baseline.py`) and the current
+multi-agent + verification version, then prints a comparison report and saves
+a JSON dump.
 
 ```bash
-python test_security.py
+python test_evaluation.py
 ```
 
-### Test Categories
+**Metrics reported:**
 
-| Test Type | Description |
-|-----------|-------------|
-| **Prompt Injection** | Tests defense against malicious instruction injection |
-| **Data Poisoning** | Tests resilience against corrupted contract data |
-| **Hallucination Detection** | Verifies hallucination reduction effectiveness |
+| Metric | Definition |
+|--------|------------|
+| Citation Accuracy (%) | `(total - unverified) / total` |
+| Hallucination Rate (%) | `unverified / total` (counts `[UNVERIFIED]` flags) |
+| Coverage Rate (%) | % of designed expected issues that were detected by keyword match |
+| Avg Latency (s) | Per-contract end-to-end wall time |
+
+> Requires both Pinecone and Ollama to be reachable — does **not** run in CI.
 
 ---
 
 ## 📊 How It Works
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    User uploads contract                      │
-└─────────────────────────────────┬───────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  User uploads contract (PDF / DOCX / TXT)                    │
+└─────────────────────────────────┬────────────────────────────┘
                                   ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Text Extraction (PDF/DOCX/TXT)                  │
-└─────────────────────────────────┬───────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  MMR retrieval (fetch_k=20 → k=5 diverse chunks)             │
+└─────────────────────────────────┬────────────────────────────┘
                                   ▼
-┌─────────────────────────────────────────────────────────────┐
-│         MMR Retrieval (20 candidates → 3 diverse)           │
-└─────────────────────────────────┬───────────────────────────┘
+┌────────────────────────────┬─────────────────────────────────┐
+│ 🔴 Risk Hunter (Junior A)  │ 🔵 Compliance Maven (Junior B)  │
+│    finds violations        │    finds gaps                    │
+└────────────────────────────┴─────────────────────────────────┘
                                   ▼
-┌─────────────────────────────────────────────────────────────┐
-│           Junior Auditor: Initial Analysis                   │
-│    "Identify contradictions with regulatory basis"           │
-└─────────────────────────────────┬───────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  HITL: user picks BOTH / ONLY_A / ONLY_B / NEITHER           │
+└─────────────────────────────────┬────────────────────────────┘
                                   ▼
-┌─────────────────────────────────────────────────────────────┐
-│        Chief Compliance Officer: Reflection Loop             │
-│    "Verify sources, reject hallucinations, recommend"        │
-└─────────────────────────────────┬───────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  Chief Officer:                                              │
+│   1. extract_citations() from selected Junior(s)             │
+│   2. re_retrieve_citations() — independent Pinecone query    │
+│      per citation                                            │
+│   3. Classify each: ✅ VERIFIED / ⚠️ PARTIAL / ❌ UNVERIFIED  │
+└─────────────────────────────────┬────────────────────────────┘
                                   ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Final Audit Report                          │
-│    ✓ Source-grounded findings                               │
-│    ✓ Specific modification recommendations                  │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  Final report grouped by HIGH / MEDIUM / LOW                 │
+│  + Unverifiable Claims section + Recommendations             │
+└──────────────────────────────────────────────────────────────┘
 ```
+
+The Quick Q&A tab is a simpler one-shot path: MMR retrieve (`k=4`) → single
+LLM call with strict source-grounding prompt → answer with Short Answer /
+Explanation / Sources / Confidence.
 
 ---
 
 ## 🎓 Academic Context
 
-This project was developed for **COMPSCI 703 - Advanced Topics in Computer Science**, focusing on practical implementations of:
+Developed for **COMPSCI 703 — Advanced Topics in Computer Science**.
+Focus areas:
 
-- Large Language Model (LLM) applications
-- Retrieval-Augmented Generation (RAG)
-- Agentic AI architectures
-- System 2 Thinking in AI
+- Agentic / multi-agent RAG
+- Human-in-the-loop verification
+- Hallucination reduction via independent citation re-retrieval
+- System 2 reasoning patterns in LLM pipelines
 
 ---
 
 ## 📝 License
 
-This project is for academic purposes.
+Academic use only.
 
 ---
 
 ## 👤 Author
 
-**Estella Liu**  
-COMPSCI 703, 2025
-
----
-
-## 🙏 Acknowledgments
-
-- LangChain Community for agentic workflow frameworks
-- Ollama for local LLM inference
-- Pinecone for vector database infrastructure
+**Estella Liu** — COMPSCI 703, 2025

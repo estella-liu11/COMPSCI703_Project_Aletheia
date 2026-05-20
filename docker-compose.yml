@@ -1,8 +1,9 @@
-# Aletheia Docker Compose Configuration
-# AI Contract Compliance Auditor
+# Aletheia Docker Compose
+# Runs the Streamlit app. Ollama is expected to run on the host
+# (or be wired up separately) — agent_audit.py talks to it via
+# http://host.docker.internal:11434 on Mac/Windows.
 
 services:
-  # Aletheia Streamlit Application
   aletheia:
     build:
       context: .
@@ -10,41 +11,22 @@ services:
     container_name: aletheia-app
     ports:
       - "8501:8501"
+    env_file:
+      - .env
     environment:
       - PINECONE_API_KEY=${PINECONE_API_KEY}
     volumes:
-      # Mount data library for regulatory documents
+      # Mount regulatory PDFs read-only (used by ingest.py)
       - ./DATA-library:/app/DATA-library:ro
     restart: unless-stopped
     networks:
       - aletheia-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8501"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8501/_stcore/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  # Ollama LLM Service (Optional - for local inference)
-  # Note: This requires significant memory (~8GB)
-  # Uncomment if you want to run Llama locally in Docker
-  # ollama:
-  #   image: ollama/ollama:latest
-  #   container_name: aletheia-ollama
-  #   ports:
-  #     - "11434:11434"
-  #   volumes:
-  #     - ollama-data:/root/.ollama
-  #   restart: unless-stopped
-  #   networks:
-  #     - aletheia-network
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         memory: 8G
-
 networks:
   aletheia-network:
     driver: bridge
-
-# volumes:
-#   ollama-data:

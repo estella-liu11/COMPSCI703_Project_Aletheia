@@ -1,5 +1,4 @@
-# Docker ignore file
-# Excludes unnecessary files from Docker build context
+# Files excluded from the Docker build context
 
 # Git
 .git
@@ -19,9 +18,10 @@ venv
 .vscode
 *.swp
 
-# Environment
+# Environment / secrets
 .env
 .env.*
+!.env.example
 secrets.toml
 
 # OS
@@ -32,15 +32,18 @@ Thumbs.db
 *.log
 logs
 
-# Documentation (not needed in container)
+# Docs (not needed in container)
 README.md
 TECH_DOC.md
 IDEA_DOC.md
-*.md
 
-# Test files
-test_*.py
-*_test.py
+# Evaluation outputs
+evaluation_results_*.json
 
-# Local development files
-.streamlit/config.toml
+# Test code (kept out of image to keep it lean)
+test_data.py
+test_evaluation.py
+agent_audit_baseline.py
+
+# CI config
+.github

@@ -1,27 +1,26 @@
-# Aletheia CI/CD - Docker Build & Push
-# Builds and pushes Docker image to GitHub Container Registry
+# Aletheia CD - Docker Build & Push
+# Builds the Streamlit app image and publishes it to GHCR.
+# Docker Hub push is opt-in via workflow_dispatch (needs DOCKERHUB_* secrets).
 
 name: Docker Build & Push
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 jobs:
-  # Job 1: Build and Push Docker Image
-  docker:
+  ghcr:
+    name: Build & push to GHCR
     runs-on: ubuntu-latest
-    
     permissions:
       contents: read
       packages: write
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -33,7 +32,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
+      - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -43,7 +42,7 @@ jobs:
             type=semver,pattern={{version}}
             type=sha,prefix=
 
-      - name: Build and push Docker image
+      - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -53,15 +52,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Job 2: Build and Push to Docker Hub (optional)
-  docker-hub:
+  dockerhub:
+    name: Build & push to Docker Hub (manual)
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment: dockerhub
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -72,7 +70,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push to Docker Hub
+      - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .

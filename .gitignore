@@ -1,4 +1,4 @@
-# Virtual Environment
+# Virtual environments
 .venv/
 venv/
 env/
@@ -22,24 +22,22 @@ build/
 # macOS
 .DS_Store
 
-# Environment Variables (contains sensitive data)
+# Secrets / environment
 .env
 .streamlit/secrets.toml
-
-# Streamlit
-.streamlit/
-cache/
 
 # Logs
 *.log
 
-# Model files (if any large files)
+# Large model files (if any get downloaded locally)
 *.bin
 *.pt
 *.pth
 
-# Data files (exclude large PDFs, keep test files)
+# Evaluation output (regenerated on every run)
+evaluation_results_*.json
+
+# DATA-library: do not commit raw PDFs/DOCX/TXT regulatory sources
 DATA-library/*.pdf
 DATA-library/*.docx
 DATA-library/*.txt
-!DATA-library/test.pdf
