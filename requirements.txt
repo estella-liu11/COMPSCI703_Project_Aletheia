@@ -10,11 +10,19 @@ langchain-core>=1.2.0
 langchain-community>=0.4.0
 langchain-huggingface>=1.2.0
 langchain-ollama>=1.0.0
+langchain-openai>=0.2.0
 langchain-pinecone>=0.2.0
+langchain-chroma>=0.2.0
 langchain-text-splitters>=1.1.0
+# LangGraph — declarative orchestration of the dual-junior + chief audit
+langgraph>=1.0.0
 
 # Vector Database
 pinecone>=7.0.0
+chromadb>=0.5.0
+
+# Auth + User DB (Supabase Postgres)
+supabase>=2.5.0
 
 # Local LLM
 ollama>=0.6.0
@@ -32,3 +40,9 @@ python-dotenv>=1.0.0
 
 # Utilities
 tiktoken>=0.5.0
+
+# External APIs
+# Frankfurter (api.frankfurter.app) — live FX rates, no key required.
+# `requests` is already pulled in transitively by langchain, but pin it
+# explicitly so `external_tools.py` stays import-safe in slim environments.
+requests>=2.31.0
