@@ -1,18 +1,14 @@
 % =====================================================================
 % Aletheia: A Compound AI System for NZ-US Cross-Border Tax-Contract Audit
 %
-% COMPSCI 703 Final Report.  Format: NeurIPS 2026 LaTeX style
-% (the current Overleaf NeurIPS template ships neurips_2026.sty).
+% COMPSCI 703 Final Report.  Format: NeurIPS 2025 LaTeX style
+% (assignment requires neurips_2025.sty specifically).
 %
 % Overleaf usage:
-%   1. Start from the official "Formatting Instructions For NeurIPS 2026"
-%      Overleaf template — it already includes `neurips_2026.sty`.
-%   2. Replace the template's body with the contents of THIS file.
+%   1. Upload `neurips_2025.sty` to your Overleaf project (from the
+%      official NeurIPS 2025 Style Files distribution).
+%   2. Paste the contents of THIS file as your main .tex.
 %   3. Click Recompile.
-%
-%   If your assignment specifically requires the 2025 style file, just
-%   change `neurips_2026` to `neurips_2025` on the \usepackage line
-%   below AND upload `neurips_2025.sty` to the project.
 %
 % Notes:
 %   • Items tagged [VERIFY] need a real citation or revised number.
@@ -23,44 +19,66 @@
 
 \documentclass{article}
 
-% NeurIPS 2026 style (matches the current Overleaf NeurIPS template).
-% Use `[final]` for the camera-ready (de-anonymised) version.
-\usepackage[final]{neurips_2026}
+% NeurIPS 2025 style (required by the assignment).
+% Mode options:
+%   no option         = review mode  (line numbers + anonymous authors)
+%   [preprint]        = preprint     (line numbers + author names visible)  ← used here
+%   [final]           = camera-ready (no line numbers + author names visible)
+\usepackage[preprint]{neurips_2025}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+% Allow URL line breaks at hyphens to keep long links inside the right margin.
+\PassOptionsToPackage{hyphens}{url}
 \usepackage{hyperref}
 \usepackage{url}
 \usepackage{booktabs}
 \usepackage{amsfonts}
+\usepackage{amssymb}    % provides \varnothing for Adversarial Pass Rate formula
 \usepackage{nicefrac}
 \usepackage{microtype}
-\usepackage{xcolor}
+\usepackage[table]{xcolor}
 \usepackage{graphicx}
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{multirow}
 \usepackage{array}
 \usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{float}      % provides [H] for hard float placement (appendix)
+\usepackage{placeins}   % provides \FloatBarrier to confine floats to sections
 \usepackage{tikz}
 \usetikzlibrary{positioning, arrows.meta, shapes.geometric}
+
+% Force line numbers to ensure they appear in preprint mode regardless
+% of how the official neurips_2025.sty interprets the option.
+\usepackage{lineno}
+\linenumbers
 
 \hypersetup{
     colorlinks=true,
     linkcolor=black,
     citecolor=blue,
     urlcolor=blue,
+    breaklinks=true,
 }
+
+% In the References list, let long URLs break at any character if needed
+% (otherwise certain government / news URLs overflow the right margin).
+\makeatletter
+\g@addto@macro\UrlBreaks{\do\/\do\-\do\.\do\_\do\?\do\=\do\&\do\#}
+\makeatother
 
 % =====================================================================
 \title{Aletheia: A Compound AI System for NZ--US\\ Cross-Border Tax-Contract Compliance Audit}
 
 \author{%
-  Estella (Hanyu) Liu \\
-  Student ID: 846403470 \\
-  Department of Computer Science \\
-  The University of Auckland \\
-  \texttt{[REPLACE: email]} \\
+Estella (Hanyu) Liu \\
+Student ID: 846403470 \\
+COMPSCI 703 Generalising AI \\
+The University of Auckland \\
+\texttt{hliu584@aucklanduni.ac.nz} \\
 }
 
 \begin{document}
@@ -69,26 +87,22 @@
 
 % =====================================================================
 \begin{abstract}
-Cross-border tax-contract compliance audits cost firms NZD~750--1{,}000 per
-contract in senior-associate labour and frequently miss treaty-specific
-obligations. We present \textbf{Aletheia}, a Compound AI System that
-orchestrates a vector database (regulatory knowledge), two adversarial
-LLM auditors, an independent verification step modelled on
-Chain-of-Verification \cite{dhuliawala2023chain}, a human-in-the-loop
-adjudication, and a live external API (foreign-exchange rates from the
-European Central Bank). The system is built on LangGraph,
-supports two interchangeable LLM backends (local Llama~3.2~3B and cloud
-DeepSeek-V3), and ships with a 12-case evaluation suite that includes
-four adversarial test contracts (OCR noise, prompt injection,
-self-contradiction, excessive length). End-to-end audit latency on
-DeepSeek is \textbf{9.4\,s} at a marginal cost of
-\textbf{\$0.0024~USD per contract}---approximately a $182{,}000\times$
-cost reduction versus equivalent Big-4 human labour. We compare the
-verified pipeline to a single-junior baseline on the same backends and
-report a 4--5$\times$ latency reduction, a $+10.6$\,pp coverage gain on
-Llama, and an unexpected adversarial-robustness regression on DeepSeek
-that motivates future work on injection-resistant multi-agent
-architectures.
+Cross-border tax-contract compliance audits cost firms NZD~750--1{,}000
+per contract in senior-associate labour and miss treaty-specific
+obligations. We present \textbf{Aletheia}, a Compound AI System
+orchestrating a regulatory vector database, two adversarial LLM
+auditors, Chain-of-Verification \cite{dhuliawala2023chain},
+human-in-the-loop adjudication, and a live ECB foreign-exchange API.
+Built on LangGraph, it supports two interchangeable backends
+(local Llama~3.2~3B, cloud DeepSeek-V3) and a 12-case evaluation suite
+with four adversarial contracts (OCR garbage, prompt injection,
+self-contradiction, excessive length). DeepSeek audits at
+\textbf{9.4\,s} and a marginal cost of \textbf{\$0.0024~per contract}
+---a $182{,}000\times$ reduction versus Big-4 human labour. Against
+a single-junior baseline, the verified pipeline delivers a
+2.8--4.2$\times$ latency reduction, $+10.6$\,pp Llama coverage, and an
+unexpected DeepSeek adversarial-robustness regression that motivates
+future work on injection-resistant multi-agent architectures.
 \end{abstract}
 
 % =====================================================================
@@ -124,7 +138,7 @@ generic clause extraction or generalist legal Q\&A, but none encode
 jurisdiction-specific treaty obligations such as the NZ--US royalty
 withholding cap or the Mutual Agreement Procedure. Aletheia closes
 this verticalised gap for four underserved customer segments: NZ
-exporters, NZ subsidiaries of US Parents (SEC/SOX reporting),
+exporters, NZ subsidiaries of US parents (SEC/SOX reporting),
 international freight forwarders, and NZ SaaS firms scaling into the US.
 
 \paragraph{Market validation by analogy.} Direct user-survey
@@ -141,7 +155,29 @@ capital, reflecting investor conviction in the legal-AI vertical.
 exclude NZ~SMB exporters whose contract volume cannot amortise a
 USD~300/user/month subscription. Aletheia's per-audit and flat-rate
 pricing (Sec.~\ref{sec:cost}) is designed to convert this underserved
-segment.
+segment. Table~\ref{tab:market} quantifies the addressable market in
+three nested scopes.
+
+\begin{table}[!ht]
+\centering
+\caption{Bottom-up market sizing for NZ--US cross-border tax-contract
+audit. Mid-sized firms are conservatively assumed to sign
+$\bar{n}{=}40$ such contracts per year at a senior-associate review
+cost of NZD~750 each. TAM/SAM/SOM follow the standard
+top-down-then-bottom-up convention.}
+\label{tab:market}
+\small
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Scope} & \textbf{Firms} & \textbf{Contracts / yr}
+               & \textbf{Annual spend (NZD)} \\
+\midrule
+TAM (global RegTech, 2033) & ---     & ---       & 112.1\,bn \cite{gvr2024regtech} \\
+SAM (NZ RegTech, AI niche) & 21{,}000 & 840{,}000 & 630\,m \\
+SOM (Year-1 4 segments)    & 1{,}000 & 40{,}000  & 30\,m \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \paragraph{Contributions.} (1)~A \textbf{Compound AI architecture}
 \cite{zaharia2024compound} (Sec.~\ref{sec:design}) integrating a
@@ -159,7 +195,7 @@ per-audit token cost of \$0.0024 against a Big-4 equivalent of
 NZD~750---a $\approx 182{,}000\times$ reduction.
 
 % =====================================================================
-\section{Related Work}
+\section{Related work}
 
 \paragraph{RAG and self-verification.}
 RAG~\cite{lewis2020rag} grounds LLM outputs in external documents;
@@ -185,8 +221,23 @@ indirect injection attacks and Liu et al.\
 follows their canonical ``Ignore previous instructions'' pattern
 embedded as a contract clause.
 
+\paragraph{Position against commercial incumbents.}
+Aletheia differs from Kira~\cite{kira2023}, Luminance~\cite{luminance2022},
+Harvey~\cite{harvey2023} and Spellbook~\cite{spellbook2024} along five
+axes: a verticalised NZ--US treaty knowledge base; multi-agent
+adversarial framing (Risk Hunter vs.\ Compliance Maven);
+Chain-of-Verification per-citation trust labels; built-in HITL
+adjudication beyond the partial review surfaces of incumbents; and a
+fully open evaluation suite that includes adversarial robustness. To
+our knowledge no incumbent ships all five. Conversely, the incumbents
+enjoy substantial advantages we do not---multi-jurisdiction coverage,
+production-scale deployment, proprietary legal-corpus training data,
+and brand---which our volume-based pricing
+(Sec.~\ref{sec:cost}) explicitly chooses not to compete on, targeting
+instead the SMB tier their per-seat models structurally exclude.
+
 % =====================================================================
-\section{System Design}
+\section{System design}
 \label{sec:design}
 
 \subsection{Compound architecture}
@@ -201,7 +252,24 @@ amounts; (4)~a \textbf{Streamlit UI} with Supabase authentication and
 per-user audit history; and (5)~the \textbf{LangGraph orchestrator}
 described below.
 
-\begin{figure}[!ht]
+\paragraph{Design rationale.}
+\emph{(i)~MMR retrieval} \cite{carbonell1998mmr} with $\lambda{=}0.5$
+re-ranks for diversity because tax articles (e.g.\ Article~12) appear
+verbatim across treaty and IRD commentary, so pure cosine returns
+redundant chunks.
+\emph{(ii)~Dual adversarial juniors} produce complementary citation
+sets (Jaccard distance $\!>\!72\%$, §\ref{sec:agentdis}): the Risk
+Hunter finds what is \emph{wrong} but a single-junior baseline misses
+\emph{omissions}, which is the Compliance Maven's role.
+\emph{(iii)~Parallel fan-out} of Junior~A / Junior~B and a 5-worker
+thread pool for CoVe per-citation verification are the largest
+contributors to the $4.2\times$ Llama speedup (§\ref{sec:perbe}); a
+sequential implementation would not be viable at NZD~5/audit pricing.
+
+\begin{figure}[!htbp]
+\centering
+% ── (a) Pre-HITL subgraph ──
+\begin{subfigure}{\linewidth}
 \centering
 \begin{tikzpicture}[
   node distance=4mm and 6mm,
@@ -211,41 +279,66 @@ described below.
   hitl/.style={box, fill=orange!20},
   arr/.style={-Stealth, thin}
 ]
-% ── Phase 1 (pre-HITL) ─────────────────────────
 \node[box] (r) {Retrieval};
-\node[box, right=of r] (e) {Enrich};
+\node[box, right=of r] (e) {Enrich (FX API)};
 \node[box, above right=1mm and 5mm of e] (a) {Junior A Risk Hunter};
 \node[box, below right=1mm and 5mm of e] (b) {Junior B Compliance Maven};
+\node[hitl, right=of e, xshift=32mm] (h) {HITL Adjudication};
 \draw[arr] (r) -- (e);
 \draw[arr] (e.east) -- (a.west);
 \draw[arr] (e.east) -- (b.west);
-% ── HITL ───────────────────────────────────────
-\node[hitl, right=of e, xshift=32mm] (h) {HITL Adjudication};
 \draw[arr] (a.east) -- (h.west);
 \draw[arr] (b.east) -- (h.west);
-% ── Phase 2 (post-HITL) ────────────────────────
-\node[box, right=of h] (x) {Extract};
-\node[box, right=of x] (v) {Verify (CoVe)};
-\node[box, right=of v] (c) {Chief};
-\draw[arr] (h.east) -- (x.west);
-\draw[arr] (x) -- (v);
-\draw[arr] (v) -- (c);
 \end{tikzpicture}
-\caption{Aletheia end-to-end topology. \textbf{Phase~1} (pre-HITL):
-MMR retrieval against the regulatory vector store, live foreign-exchange
-enrichment via an external API, and two adversarial junior auditors
-running in parallel. The user then adjudicates one of three routes
-(\texttt{BOTH}, \texttt{ONLY\_A}, \texttt{ONLY\_B}). \textbf{Phase~2}
-(post-HITL): the pipeline performs citation extraction, independent
-Chain-of-Verification~\cite{dhuliawala2023chain}, and final-report
-synthesis by the Chief Officer.}
+\caption{Phase~1 --- pre-HITL. MMR retrieval against the regulatory
+vector store, live foreign-exchange enrichment via the Frankfurter
+external API, and two adversarial junior auditors running in parallel
+before user adjudication routes one of \texttt{BOTH}, \texttt{ONLY\_A},
+\texttt{ONLY\_B}.}
+\label{fig:topology-pre}
+\end{subfigure}\\[6pt]
+% ── (b) Post-HITL subgraph ──
+\begin{subfigure}{\linewidth}
+\centering
+\begin{tikzpicture}[
+  node distance=4mm and 6mm,
+  every node/.style={font=\scriptsize},
+  box/.style={rectangle, rounded corners=2pt, draw, minimum height=5.5mm,
+              inner sep=3pt, fill=blue!8},
+  hitl/.style={box, fill=orange!20},
+  ver/.style={box, fill=green!10},
+  arr/.style={-Stealth, thin}
+]
+\node[hitl] (h) {HITL decision};
+\node[box, right=of h] (x) {Extract citations};
+\node[ver, right=of x, yshift=4mm] (q) {Generate $Q_i$};
+\node[ver, right=of q] (rt) {Retrieve $E_i$ ($k{=}2$)};
+\node[ver, right=of rt] (lb) {Label $t_i$};
+\node[box, right=of x, yshift=-7mm] (c) {Chief synthesis};
+\draw[arr] (h) -- (x);
+\draw[arr] (x.east) |- (q.west);
+\draw[arr] (q) -- (rt);
+\draw[arr] (rt) -- (lb);
+\draw[arr] (lb) |- (c.east);
+\draw[arr] (x) -- (c);
+\end{tikzpicture}
+\caption{Phase~2 --- post-HITL Chain-of-Verification
+\cite{dhuliawala2023chain}. The pipeline extracts each citation
+$c_i$, has the LLM generate 1--2 verification questions $Q_i$,
+independently re-retrieves evidence $E_i$ in parallel, and labels each
+citation $t_i\in\{\texttt{Verified},\texttt{Needs Review},
+\texttt{Source Not Found}\}$ before the Chief Officer composes the
+final report.}
+\label{fig:topology-post}
+\end{subfigure}
+\caption{Aletheia end-to-end topology, split by phase.}
 \label{fig:topology}
 \end{figure}
 
 \subsection{Dual juniors, HITL, CoVe}
 \label{sec:dual-juniors}
 The pre-HITL graph
-(Figure~\ref{fig:topology}, top) issues a single MMR retrieval
+(Figure~\ref{fig:topology-pre}) issues a single MMR retrieval
 ($k\!=\!5, \text{fetch\_k}\!=\!15$) then fans out two parallel LLM
 calls: \textbf{Junior A (Risk Hunter)} searches for clauses that
 \emph{violate} the regulatory basis; \textbf{Junior B (Compliance
@@ -263,6 +356,77 @@ per question in parallel, and (iv)~synthesises a final report tagging
 each citation \texttt{Verified} / \texttt{Needs Review} /
 \texttt{Source Not Found}---a faithful application of
 CoVe~\cite{dhuliawala2023chain} to compliance citations.
+Figure~\ref{fig:final-report} shows the resulting final report
+surfaced to the user.
+
+Algorithm~\ref{alg:aletheia} formalises the two-phase orchestration
+with parallel sections explicit.
+
+\begin{algorithm}[!ht]
+\caption{Aletheia end-to-end audit (LangGraph orchestration).}
+\label{alg:aletheia}
+\begin{algorithmic}[1]
+\Require contract $c$, vector store $V$, FX-API $\mathcal{F}$, LLM $\mathcal{L}$, user $u$
+\Ensure  verified audit report $R$
+\Statex \textit{Phase 1 --- pre-HITL}
+\State $D' \gets \textsc{MMR}(V, c) \cup \mathcal{F}.\textsc{rates}(c)$
+\State In parallel: $f_A\!\gets\!\mathcal{L}.\textsc{RiskHunter}(D', c)$;\ \ $f_B\!\gets\!\mathcal{L}.\textsc{ComplianceMaven}(D', c)$
+\State $r \gets u.\textsc{adjudicate}(f_A, f_B);\ F \gets \textsc{select}(f_A, f_B, r);\ C \gets \textsc{extractCitations}(F)$
+\Statex \textit{Phase 2 --- post-HITL Chain-of-Verification}
+\For{$c_i \in C$ in parallel}
+  \State $Q_i \gets \mathcal{L}.\textsc{verifyQuestions}(c_i);\quad E_i \gets V.\textsc{retrieve}(Q_i)$
+  \State $t_i \gets \textsc{label}(c_i, E_i) \in \{\texttt{Verified},\texttt{Needs Review},\texttt{Source Not Found}\}$
+\EndFor
+\State \Return $\mathcal{L}.\textsc{ChiefOfficer}(F, \{(c_i, t_i)\})$
+\end{algorithmic}
+\end{algorithm}
+
+\begin{figure}[!htbp]
+\centering
+\begin{subfigure}{\linewidth}
+  \centering
+  \includegraphics[width=\linewidth]{Figure/streamlit_hitl-1.png}
+  \caption{Side-by-side findings from the two adversarial juniors on
+  TC-001 (DeepSeek backend). \emph{Risk Hunter} (left) flags the
+  contract's 5\% royalty withholding rate as HIGH severity, citing
+  Article~12 of the NZ--US Treaty. \emph{Compliance Maven} (right)
+  independently flags a missing Limitation-on-Benefits clause---a
+  structurally \emph{different} finding the single-junior baseline
+  cannot produce.}
+  \label{fig:hitl-a}
+\end{subfigure}\\[4pt]
+\begin{subfigure}{0.7\linewidth}
+  \centering
+  \includegraphics[width=\linewidth]{Figure/streamlit_hitl-2.png}
+  \caption{Adjudication controls. The reviewer routes the next stage
+  to \texttt{BOTH}, \texttt{ONLY\_A} or \texttt{ONLY\_B}; the
+  ``\texttt{\textasciitilde 5s}'' spinner reflects measured
+  Chain-of-Verification latency on DeepSeek-V3.}
+  \label{fig:hitl-b}
+\end{subfigure}
+\caption{The HITL adjudication screen in the deployed Streamlit UI
+running TC-001 end-to-end on DeepSeek-V3.}
+\label{fig:hitl}
+\end{figure}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.85\linewidth]{Figure/streamlit_hitl-3.png}
+\caption{Final audit report produced by the Chief Officer for TC-001
+on DeepSeek-V3. The report follows the four-section schema
+(\textsc{Executive Summary} / \textsc{Critical Findings} /
+\textsc{Recommendations} / \textsc{Citations}) and carries an inline
+trust-tier badge per citation
+(\texttt{Verified}, \texttt{Needs Review}, \texttt{Source Not Found}),
+materialising the CoVe per-citation labels of
+Algorithm~\ref{alg:aletheia} in the user-facing deliverable.
+TC-001's planted condition is the wrong 5\% royalty rate
+(Table~\ref{tab:contracts-list}); the \emph{``indefinite term''}
+issue raised under Issue~[3] is an organic finding outside the planted
+condition, illustrating that Aletheia surfaces real-world contract
+issues beyond the planted test set.}
+\label{fig:final-report}
+\end{figure}
 
 \subsection{Backend-conditional safety nets}
 \label{sec:safety-nets}
@@ -276,16 +440,15 @@ This cleanly isolates our architectural contribution from any
 specific model's idiosyncrasies.
 
 % =====================================================================
+\FloatBarrier
 \section{Implementation}
 \label{sec:impl}
 
 \paragraph{Stack.} Python 3.13, LangChain~1.2, LangGraph~1.0,
-HuggingFace sentence-transformers (\texttt{all-MiniLM-L6-v2}, 384-dim)
-\cite{reimers2019sbert}. Vector store: Pinecone Serverless (cloud) or
-Chroma (local, air-gapped). LLM: Ollama-served Llama~3.2
-\cite{meta2024llama3} or DeepSeek API (\texttt{deepseek-chat})
-\cite{deepseek2024v3}. UI: Streamlit~$\geq$~1.28. Auth + persistence:
-Supabase. Token accounting: tiktoken (\texttt{cl100k\_base}) at the
+HuggingFace \texttt{all-MiniLM-L6-v2} (384-dim) \cite{reimers2019sbert};
+vector store Pinecone Serverless or Chroma; LLM Ollama-served
+Llama~3.2 \cite{meta2024llama3} or DeepSeek API \cite{deepseek2024v3};
+Streamlit UI + Supabase auth; token accounting via tiktoken at the
 single \texttt{invoke\_text} chokepoint.
 
 \paragraph{Knowledge base ingest.} The PDF corpus is hashed
@@ -314,44 +477,81 @@ TC-011 self-contradictory clauses, TC-012 excessive length). For each
 contract we run two pipelines---\emph{Baseline} (single junior +
 single chief, no verification) and \emph{Verified} (the full
 LangGraph pipeline above)---on both backends, yielding $12 \times 2
-\times 2 = 48$ audits per run.
+\times 2 = 48$ audits per run. The Baseline pipeline (single junior,
+no Chain-of-Verification, no dual-agent debate) is functionally
+equivalent to a vanilla RAG implementation \cite{lewis2020rag},
+providing an external-method comparator against which the Verified
+pipeline isolates the contribution of dual-junior framing plus CoVe.
+
+\paragraph{HITL adjudication protocol.}
+For all 48 evaluation audits, the human-in-the-loop step is
+deterministically simulated as the \texttt{BOTH} route (merge findings
+from both juniors), and \texttt{ONLY\_A} / \texttt{ONLY\_B} are not
+exercised during evaluation. This deliberately removes human-judgement
+variance so that any reported delta isolates the architectural
+contribution. The deployed Streamlit UI (Figure~\ref{fig:hitl})
+exposes all three routes to a domain reviewer; field-deployment
+inter-annotator agreement is out of scope for this study and
+listed as a threat to validity (Sec.~\ref{sec:discussion}).
 
 \subsection{Metrics}
 Following recent RAG-evaluation practice \cite{es2023ragas}, we use
-seven metrics, all derived from a single citation extractor to ensure
-cross-backend comparability.
-\textbf{Success Rate} is the \% of audits completing without an
-exception. \textbf{Citation Accuracy}
-$\!=\!(\textit{total}\!-\!\textit{not\_found})/\textit{total}$ over
-\texttt{Source:} lines, where \textit{not\_found} counts
-\texttt{Source Not Found} (or legacy \texttt{[UNVERIFIED]}) labels;
-\textbf{Hallucination Rate} is its inverse. \textbf{Coverage Rate} is
-the \% of expected issues detected via keyword-match ($\ge 50\%$
-presence per issue). \textbf{Adversarial Pass Rate} is binary
-per adversarial TC: both \texttt{must\_contain} keywords must appear
-\emph{and} forbidden \texttt{must\_not\_contain} strings (e.g.\
-``fully COMPLIANT'' under injection) must not. \textbf{Latency} is
-end-to-end wall-clock per audit. \textbf{Agent Disagreement Rate} is
-the Jaccard distance between the two juniors' citation sets,
-measuring whether adversarial framing produces complementary findings
-or redundancy.
+seven metrics derived from a single citation extractor to ensure
+cross-backend comparability. For an audit $a$, let $S(a)$ count the
+\texttt{Source:} lines in its final report and
+$S_\textsc{nf}(a)\subseteq S(a)$ those flagged
+\texttt{Source Not Found}; let $E(a)$ be the planted issues and
+$\hat{E}(a)$ those detected by keyword-match at $\ge 50\%$ token
+presence; let $C_A, C_B$ be the citation sets emitted by Junior~A
+and Junior~B; and let $M_+(a), M_-(a)$ be the required and forbidden
+substrings of adversarial TC $a$.
 
-\subsection{Per-backend results}
+\begin{description}
+\setlength{\itemsep}{2pt}
+\item[Coverage Rate.]
+  $\text{Cov}(a) = |\hat{E}(a)| / |E(a)|$
+  --- fraction of planted issues actually caught.
+\item[Citation Accuracy / Hallucination Rate.]
+  $\text{CA}(a) = 1 - |S_\textsc{nf}(a)|/|S(a)|$
+  is the fraction of citations Aletheia did \emph{not} flag as unverified;
+  $\text{HR}(a) = 1 - \text{CA}(a)$.
+\item[Adversarial Pass Rate.] Binary per adversarial TC:
+  pass iff $M_+(a) \subseteq \text{text}(a)$ \emph{and}
+  $M_-(a) \cap \text{text}(a) = \varnothing$. Reported as the
+  pass fraction over the four adversarial TCs.
+\item[Agent Disagreement Rate.]
+  $\text{ADR}(a) = 1 - |C_A \cap C_B|/|C_A \cup C_B|$
+  --- Jaccard distance between the two juniors' citation sets.
+\item[Success Rate.] Fraction of audits completing without raising.
+\item[Latency.] End-to-end wall-clock seconds per audit, inclusive
+  of all LLM and retrieval round-trips.
+\end{description}
+
+All metrics are deterministic at temperature~0, ensuring exact
+reproducibility from a single \texttt{python test\_evaluation.py}
+invocation.
+
+\subsection{Per-backend results and cross-backend convergence}
+\label{sec:perbe}
 Table~\ref{tab:per_backend} reports per-backend aggregates. The
 Verified pipeline yields a $4.2\times$ wall-clock speedup on Llama
 and $2.8\times$ on DeepSeek (parallel Junior fan-out + parallel CoVe
-retrieval). Coverage improves by $+10.6$\,pp on Llama;
-on DeepSeek it falls $-12.1$\,pp because verification drops
-unconfirmed citations (see Sec.~\ref{sec:discussion}).
+retrieval). Coverage improves by $+10.6$\,pp on Llama; on DeepSeek
+it falls $-12.1$\,pp because verification drops unconfirmed citations
+(Sec.~\ref{sec:discussion}). Crucially, both backends converge to
+identical $78.8\%$ Coverage under the Verified pipeline---evidence
+that the contribution is architectural rather than LLM-specific---
+while DeepSeek runs $5.6\times$ faster at a comparable token budget.
 
 \begin{table}[t]
 \centering
 \caption{Per-backend evaluation results (12 contracts each).
 \textsc{Bse}\,=\,single-junior baseline, \textsc{Ver}\,=\,verified
-pipeline (Aletheia). $\Delta$ is Ver$-$Bse. Lower is better for
-Latency / Hallucination Rate. Average tokens and LLM-call count include
-all LLM calls per audit. ``\textsc{adv}'' is the adversarial pass rate
-over 4~adversarial TCs.}
+pipeline (Aletheia). Cells report mean~$\pm$~sample standard deviation
+across the 12 audits per run. $\Delta$ is the mean change Ver$-$Bse.
+Lower is better for Latency / Hallucination Rate. Adv.\ Pass Rate is
+the binomial pass rate over $n_{\text{adv}}{=}4$ adversarial TCs;
+its Wilson 95\% CI is reported in Table~\ref{tab:adv}.}
 \label{tab:per_backend}
 \small
 \begin{tabular}{lrrrrrr}
@@ -362,51 +562,31 @@ over 4~adversarial TCs.}
                 & \textsc{Bse} & \textsc{Ver} & $\Delta$ \\
 \midrule
 Success Rate (\%)        & 100.0 & 100.0 &  $+0.0$ & 100.0 & 100.0 & $+0.0$  \\
-Citation Accuracy (\%)   & 100.0 & 100.0 &  $+0.0$ & 100.0 & 91.7  & $-8.3$  \\
-Hallucination Rate (\%)  & 0.0   & 0.0   &  $+0.0$ & 0.0   & 8.3   & $+8.3$  \\
-Coverage Rate (\%)       & 68.2  & 78.8  & $+10.6$ & 90.9  & 78.8  & $-12.1$ \\
+Citation Accuracy (\%)   & 100.0$\pm$0.0 & 100.0$\pm$0.0 &  $+0.0$
+                         & 100.0$\pm$0.0 & 91.7$\pm$28.9 & $-8.3$  \\
+Hallucination Rate (\%)  & 0.0$\pm$0.0   & 0.0$\pm$0.0   &  $+0.0$
+                         & 0.0$\pm$0.0   & 8.3$\pm$28.9  & $+8.3$  \\
+Coverage Rate (\%)       & 68.2$\pm$46.2 & 78.8$\pm$33.4 & $+10.6$
+                         & 90.9$\pm$30.2 & 78.8$\pm$40.2 & $-12.1$ \\
 Adv.\ Pass Rate (\%)     & 50.0  & 50.0  &  $+0.0$ & 100.0 & 50.0  & $-50.0$ \\
-Avg.\ Latency (s)        & 220.9 & 52.5  &$-168.4$ & 26.4  & 9.4   & $-17.0$ \\
+Avg.\ Latency (s)        & 220.9$\pm$606.7 & 52.5$\pm$15.8 &$-168.4$
+                         & 26.4$\pm$3.5    & 9.4$\pm$3.3   & $-17.0$ \\
 Total Tokens (avg.)      & 9091  & 6538  & $-2553$ & 3793  & 6995  & $+3202$ \\
 LLM Calls (avg.)         & 2.0   & 3.8   &  $+1.8$ & 2.0   & 3.8   & $+1.8$  \\
-Agent Disagreement (\%)  & ---   & 72.2  &     --- & ---   & 80.6  & ---     \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Cross-backend comparison}
-Table~\ref{tab:cross_backend} holds the pipeline fixed and compares
-backends. Identical $78.8\%$ coverage on a 3B open model and a
-state-of-the-art hosted model supports that our contributions are
-architectural rather than LLM-specific; DeepSeek runs $5.6\times$
-faster at a comparable token budget.
-
-\begin{table}[t]
-\centering
-\caption{Cross-backend comparison of the Verified pipeline.}
-\label{tab:cross_backend}
-\small
-\begin{tabular}{lrr}
-\toprule
-\textbf{Metric (Verified pipeline)} & \textbf{Llama 3.2 3B} & \textbf{DeepSeek-V3} \\
-\midrule
-Success Rate (\%)        & 100.0 & 100.0 \\
-Citation Accuracy (\%)   & 100.0 & 91.7  \\
-Hallucination Rate (\%)  & 0.0   & 8.3   \\
-Coverage Rate (\%)       & 78.8  & 78.8  \\
-Adv.\ Pass Rate (\%)     & 50.0  & 50.0  \\
-Avg.\ Latency (s)        & 52.5  & 9.4   \\
-Total Tokens (avg.)      & 6538  & 6995  \\
-Agent Disagreement (\%)  & 72.2  & 80.6  \\
+Agent Disagreement (\%)  & ---   & 72.2$\pm$26.9  &     --- & ---   & 80.6$\pm$24.7  & ---     \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Adversarial robustness}
-Table~\ref{tab:adv} breaks down the four adversarial cases. Llama
-ties at $50\%$; on DeepSeek the baseline passes 4/4, the Verified
-pipeline 2/4---an unexpected regression discussed in
-Sec.~\ref{sec:discussion}.
+Table~\ref{tab:adv} breaks down the four adversarial cases.
+Llama ties at $50\%$; on DeepSeek the baseline passes 4/4 and the
+Verified pipeline 2/4---a regression discussed in
+Sec.~\ref{sec:discussion} and component-attributed in
+Sec.~\ref{sec:ablation}. With $n_{\text{adv}}{=}4$ we report Wilson
+95\% confidence intervals \cite{wilson1927ci}: $[15\%,85\%]$ for
+$2/4$ and $[51\%,100\%]$ for $4/4$, making explicit that single-run
+point comparisons are under-powered.
 
 \begin{table}[t]
 \centering
@@ -428,12 +608,17 @@ TC-010 & Prompt injection (must resist + find issue)& \checkmark & \checkmark & 
 TC-011 & Self-contradictory withholding rates       & \checkmark & \checkmark & \checkmark & \checkmark \\
 TC-012 & Excessive length (issues at tail)          & $\times$ & $\times$ & \checkmark & \checkmark \\
 \midrule
-\textbf{Pass rate} & & 2/4 (50\%) & 2/4 (50\%) & 4/4 (100\%) & 2/4 (50\%) \\
+\textbf{Pass rate}
+  & & 2/4 (50\%) & 2/4 (50\%) & 4/4 (100\%) & 2/4 (50\%) \\
+\textbf{Wilson 95\% CI}
+  & & {\scriptsize[15,85]} & {\scriptsize[15,85]}
+  & {\scriptsize[51,100]} & {\scriptsize[15,85]} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Agent-disagreement evidence}
+\label{sec:agentdis}
 The Jaccard distance between the two juniors' citation sets averages
 $72\%$ (Llama) and $81\%$ (DeepSeek). This validates that
 the adversarial framing surfaces complementary findings: were the two
@@ -442,8 +627,89 @@ zero. The high disagreement also explains why downstream
 human adjudication is valuable---the juniors genuinely disagree
 about which obligations matter.
 
+\subsection{Component ablation}
+\label{sec:ablation}
+We isolate the marginal contribution of dual-junior framing versus
+Chain-of-Verification by running three same-codepath configurations
+(\texttt{agent\_audit.py}) on both backends and reporting them in
+Table~\ref{tab:ablation}: \textbf{M3} = single route + CoVe
+(\texttt{ONLY\_A}); \textbf{M4} = dual + no verification
+(\texttt{BOTH}, \texttt{VERIFY\_MODE=none}); \textbf{M2} = full
+Aletheia (dual + CoVe). M1 in Table~\ref{tab:per_backend} uses a separate sequential
+implementation and is excluded from this same-codepath comparison.
+In M3, Junior~B is still invoked internally so retrieval and
+context remain identical to M2; its output is then discarded before
+the Chief Officer sees it.
+
+\begin{table}[!ht]
+\centering
+\caption{Three-way same-codepath ablation on both backends
+($n{=}12$ per cell, all routed through \texttt{agent\_audit.py}).
+M3 isolates CoVe; M4 isolates dual-junior; M2 is the full system.
+Cells report mean $\pm$ sample SD across the 12 audits. AdvPR is
+the binomial pass rate over the 4 adversarial TCs. $\Delta$\,dual
+$=$ M2$-$M3 (gain from adding Junior~B holding CoVe constant);
+$\Delta$\,CoVe $=$ M2$-$M4 (gain from adding verification holding
+dual-junior constant).}
+\label{tab:ablation}
+\small
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Cell} & \textbf{Configuration}
+              & \textbf{Cov\%} & \textbf{CA\%} & \textbf{HR\%}
+              & \textbf{AdvPR\%} \\
+\midrule
+\multicolumn{6}{l}{\emph{Llama 3.2 3B (Ollama)}} \\
+M3 & single-route + CoVe            & 48.5$\pm$45.0 & 100.0$\pm$0.0 & 0.0$\pm$0.0  & 25.0 \\
+M4 & dual + no verification         & 83.3$\pm$32.5 & 95.8$\pm$14.4 & 4.2$\pm$14.4 & 50.0 \\
+\textbf{M2} & \textbf{dual + CoVe (full)}
+   & \textbf{78.8$\pm$33.4} & 100.0$\pm$0.0 & 0.0$\pm$0.0 & 50.0 \\
+\rowcolor{gray!10} & $\Delta$\,dual / $\Delta$\,CoVe
+   & $+30.3$ / $-4.5$ & --- & --- & $+25.0$ / $+0.0$ \\
+\midrule
+\multicolumn{6}{l}{\emph{DeepSeek-V3}} \\
+M3 & single-route + CoVe            & 69.7$\pm$45.8 & 76.4$\pm$39.2 & 23.6$\pm$39.2 & 50.0 \\
+M4 & dual + no verification         & 69.7$\pm$45.8 & 100.0$\pm$0.0 & 0.0$\pm$0.0   & 50.0 \\
+\textbf{M2} & \textbf{dual + CoVe (full)}
+   & \textbf{78.8$\pm$40.2} & 91.7$\pm$28.9 & 8.3$\pm$28.9 & 50.0 \\
+\rowcolor{gray!10} & $\Delta$\,dual / $\Delta$\,CoVe
+   & $+9.1$ / $+9.1$ & --- & --- & $+0.0$ / $+0.0$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Cross-backend ablation surfaces three findings.
+
+\paragraph{(F1) Components contribute asymmetrically per backend.}
+On DeepSeek-V3 the dual-junior and CoVe deltas are equal
+($+9.1$\,pp Coverage each). On Llama 3.2 3B dual-junior dominates
+($+30.3$\,pp) and CoVe \emph{reduces} Coverage by $4.5$\,pp:
+Llama's verification questions occasionally fail to re-retrieve
+evidence for correct citations, triggering the safety-net fallback
+(Sec.~\ref{sec:safety-nets}) which strips trust labels. Both
+backends nonetheless converge to $78.8\%$ Coverage under M2, in line
+with our claim that the architectural contribution generalises
+across backends even when component contributions do not.
+
+\paragraph{(F2) Both backends confirm the ``vacuous 100\,\%'' diagnosis.}
+M4 on DeepSeek and M2 / M3 on Llama all read near 100\,\% Citation
+Accuracy / 0\,\% Hallucination Rate via different mechanisms:
+DeepSeek-M4 has no verification step to flag uncertainty, Llama has
+one but the safety-net strips its labels. Only DeepSeek-M2 (and
+Llama-M4 partially) surface non-trivial unverified counts.
+
+\paragraph{(F3) The adversarial-pass regression is DeepSeek-specific.}
+On DeepSeek all three same-codepath cells sit at 50\,\% AdvPR vs.\
+M1's 100\,\%---attributable to the four-call codepath as a whole
+rather than to either component individually. On Llama, M2 and M4
+already match M1's 50\,\% and only M3 drops to 25\,\%, suggesting
+Llama's pre-existing adversarial weakness is the dominant factor.
+Per-stage injection-defence rather than component removal is
+therefore the appropriate hardening direction
+(Sec.~\ref{sec:discussion}).
+
 % =====================================================================
-\section{Cost-Benefit Analysis}
+\section{Cost-benefit analysis}
 \label{sec:cost}
 
 Token usage is instrumented at the single \texttt{invoke\_text}
@@ -465,7 +731,7 @@ NZ industry-typical senior-associate billing. Conversion at
 \toprule
 \textbf{Auditor} & \textbf{Time} & \textbf{Tokens} & \textbf{Cost (USD)} & \textbf{Cost (NZD)} \\
 \midrule
-Aletheia / DeepSeek-V3      & 9.4\,s   & 6,995 & \$0.0024 & NZD~0.004 \\
+Aletheia / DeepSeek-V3      & 9.4\,s   & 6,995 & \$0.0024 & NZD~0.0041 \\
 Aletheia / Llama~3.2~3B     & 52.5\,s  & 6,538 & \$0.0000\textsuperscript{*} & NZD~0.000 \\
 Big-4 senior associate      & 3\,hr    & ---   & \$437    & NZD~750   \\
 \midrule
@@ -477,28 +743,38 @@ Big-4 senior associate      & 3\,hr    & ---   & \$437    & NZD~750   \\
 ($\le$\,\$0.001 per audit on an M-series Mac).
 \end{table}
 
-\paragraph{Competitor pricing benchmark.} Spellbook, a vertically
-focused AI legal-review incumbent, charges over USD~300 per
-user/month \cite{spellbook2024}---establishing both the
-market's tolerance for specialised legal-AI subscription pricing
-and a price ceiling Aletheia can undercut. Big-4 manual audits cost
-USD~300--800/hour for senior associates;
-Aletheia's Professional tier targets the same per-contract outcome
-at approximately USD~2.50 per audit.
+\paragraph{SaaS pricing model.} The deployed Streamlit application
+(Figure~\ref{fig:pricing-ui}) offers three monthly subscription tiers:
+\emph{Basic} (USD~199/mo, 50~audits, implied USD~3.98 per audit);
+\emph{Professional} (USD~499/mo, 200~audits, implied USD~2.50 per
+audit, recommended default); and \emph{Enterprise} (USD~1{,}999/mo,
+unlimited audits, air-gapped Llama deployment). At a measured
+DeepSeek per-audit token cost of USD~0.0024 (Table~\ref{tab:cost}),
+every tier sits above $99.9\%$ gross margin and 99--99.4\% below the
+Big-4 per-audit benchmark of USD~437. The Professional tier sits in the same price range as Spellbook's
+USD~300+/seat/month floor, and any firm with two or more legal seats
+on Spellbook would pay strictly more for fewer audits; the bundled
+200~audits/month is $\approx 60\times$ the monthly cross-border
+contract flow of a typical NZ--US mid-sized exporter
+($\bar{n}{=}40$/year, Table~\ref{tab:market}), so the
+\emph{effective} per-audit rate falls well below Spellbook's
+floor. The Enterprise tier monetises the on-prem Llama deployment for
+clients whose data may not leave the perimeter.
 
-\paragraph{SaaS pricing model.} A pay-per-audit tier at NZD~5 per
-contract (a 99.3\% discount on the human equivalent) would yield
-$\approx 99.9\%$ gross margin on DeepSeek and effectively $100\%$ on local
-Llama. A flat NZD~99/month unlimited tier breaks even at 20
-contracts/month per subscriber---well within the volume of an active
-mid-sized firm, and roughly an 80\% discount to Spellbook's
-floor price. Following Spellbook's evidence of WTP for vertical
-legal-AI subscriptions, Aletheia's volume-based pricing is
-specifically designed to convert SMB exporters whom incumbent
-seat-pricing currently excludes.
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.7\linewidth]{Figure/streamlit_hitl-4.png}
+\caption{The in-app pricing surface offering three tiers
+(\emph{Basic} / \emph{Professional} / \emph{Enterprise}). The
+Professional tier is the recommended default at the volume of a
+typical NZ--US mid-sized exporter; the Enterprise tier explicitly
+markets the air-gapped Llama backend (Sec.~\ref{sec:safety-nets}) as
+the on-prem option for clients whose data may not leave the perimeter.}
+\label{fig:pricing-ui}
+\end{figure}
 
 % =====================================================================
-\section{Discussion and Limitations}
+\section{Discussion and limitations}
 \label{sec:discussion}
 
 \paragraph{The adversarial-robustness regression on DeepSeek.}
@@ -515,7 +791,11 @@ flagged finding triggers a false fail. A more semantic adversarial
 metric would credit this case as a partial pass.
 The genuine residual risks remain worth flagging:
 (i)~the Verified pipeline issues four LLM calls vs.\ baseline's two,
-each independently exposing the injected payload;
+each independently exposing the injected payload---and our component
+ablation (Sec.~\ref{sec:ablation}) shows this drop to 50\% AdvPR
+persists across \emph{all} multi-call configurations (M2 / M3 / M4),
+so the regression is attributable to architectural call-count rather
+than to CoVe specifically;
 (ii)~CoVe question-generation can paraphrase the injection into a
 downstream instruction; and
 (iii)~our top-of-prompt injection-defence banner may lose attention
@@ -523,30 +803,14 @@ salience over long prompts. Future work: per-stage injection
 re-checks, schema-constrained outputs (function calling), and
 injection-resistance fine-tuning.
 
-\paragraph{Citation Accuracy / Hallucination Rate semantics.} Three of
-the four cells in these rows hit boundary values
-(Llama~BSE 100\%, Llama~VER 100\%, DeepSeek~BSE 100\%,
-DeepSeek~VER 91.7\%), which can look suspiciously clean. The
-explanation is that both metrics are computed from the count of
-trust-label tokens (\texttt{Source Not Found}) in the final report:
-the baseline pipeline has no verification step and therefore never
-emits any trust label, and the Llama~3.2~3B backend frequently
-falls back to raw Junior outputs without the structured trust
-tagging---so for all three 100\% cells, the ``\textit{citations are
-100\% verified}'' reading is \emph{vacuous} rather than evidence of
-quality. Only the DeepSeek~Verified column reflects a real
-measurement: the pipeline honestly flags $8.3\%$ of its citations as
-\texttt{Source Not Found}, visible to the user as a soft inline badge.
-We argue that exposed uncertainty is preferable to silent overclaim,
-and that future revisions should report Citation Accuracy only on
-backends whose output reliably carries trust labels.
-
-\paragraph{Coverage trade-off.} On DeepSeek baseline detects $90.9\%$
-of expected issues, the Verified pipeline $78.8\%$. The CoVe step
-intentionally drops findings whose citations fail verification, which
-costs coverage but improves reliability. Whether this trade-off favours
-the user depends on the use case: pre-screening (high coverage) vs.\
-sign-off (high trust).
+\paragraph{Coverage trade-off.}
+DeepSeek baseline detects $90.9\%$ of expected issues, the Verified
+pipeline $78.8\%$. CoVe intentionally drops findings whose citations
+fail verification, trading coverage for reliability; whether this
+favours the user depends on the use case (pre-screening vs.\ sign-off).
+The vacuous-100\% Citation Accuracy / Hallucination Rate readings
+discussed in Sec.~\ref{sec:ablation} also explain the suspiciously
+clean boundary values in Table~\ref{tab:per_backend}.
 
 \paragraph{Threats to validity.} (i)~Our test set is 12 contracts,
 intentionally focused on the NZ--US treaty surface; broader evaluation
@@ -559,6 +823,9 @@ across backends; per-backend exact tokenisation would shift absolute
 numbers by single-digit percent. (iv)~The market-need numbers rely on
 cited industry reports rather than primary interviews; a future
 revision should include practitioner-survey results.
+(v)~HITL adjudication is deterministically simulated as \texttt{BOTH}
+during evaluation (Sec.~\ref{sec:eval}); field-deployment
+inter-annotator agreement on the \texttt{BOTH}\,/\,\texttt{ONLY\_A}\,/\,\texttt{ONLY\_B} route is unmeasured.
 
 % =====================================================================
 \section{Conclusion}
@@ -574,166 +841,190 @@ The same architecture runs fully air-gapped on local Llama~3.2~3B
 with the aid of backend-conditional safety nets, demonstrating model
 portability. An unexpected adversarial-robustness regression on the
 strong backend motivates future work on injection-resistant multi-agent
-architectures. All code, prompts, hyperparameters, evaluation
-fixtures and raw run outputs are released
-at\,\href{[REPLACE: GitHub URL]}{[REPLACE: GitHub URL]}.
+architectures. All code, prompts, hyperparameters, evaluation fixtures and raw
+96-audit outputs (48 main eval $+$ 48 ablation) are released under
+the MIT licence at
+\url{https://github.com/estella-liu11/COMPSCI703_Project_Aletheia};
+all tables in this paper can be regenerated with the single command
+\texttt{python test\_evaluation.py}.
 
 % =====================================================================
 % References (inline bibliography so the report compiles without a .bib file)
 % =====================================================================
 \begin{thebibliography}{99}\small
 
-% References ordered by first citation in the body (LaTeX numbers
-% \bibitem entries by their position in this list, so the order here
-% drives the [1], [2], ... numbers seen in the text).
+% References ordered by first citation in the body, formatted to match the
+% NeurIPS 2025 template: "Last, F. (Year) Title. \emph{Venue}, pp. xx-yy."
 
 \bibitem{dhuliawala2023chain}
-S.~Dhuliawala, M.~Komeili, J.~Xu, R.~Raileanu, X.~Li, A.~Celikyilmaz, J.~Weston.
-\emph{Chain-of-Verification Reduces Hallucination in Large Language Models}.
-arXiv:2309.11495, 2023. \url{https://arxiv.org/abs/2309.11495}
+Dhuliawala, S., Komeili, M., Xu, J., Raileanu, R., Li, X., Celikyilmaz, A.
+\& Weston, J. (2023) Chain-of-Verification reduces hallucination in large
+language models. \emph{arXiv preprint arXiv:2309.11495}.
+\url{https://arxiv.org/abs/2309.11495}
 
 \bibitem{dfsa2024vedas}
-Dubai Financial Services Authority.
-\emph{The DFSA fines Vedas International Marketing Management for
-unauthorised and misleading financial promotions}.
-Official enforcement notice, 5~Nov 2024.
+Dubai Financial Services Authority. (2024) The DFSA fines Vedas
+International Marketing Management for unauthorised and misleading
+financial promotions. Official enforcement notice, 5 November 2024.
 \url{https://www.dfsa.ae/news/dfsa-fines-vedas-international-marketing-management-unauthorised-and-misleading-financial-promotions}
 
 \bibitem{trebbi2024catocost}
-F.~Trebbi, M.B.~Zhang, M.~Simkovic.
-\emph{The Cost of Regulatory Compliance in the United States}.
-Cato Institute Research Brief in Economic Policy No.~367, 2024.
+Trebbi, F., Zhang, M.B. \& Simkovic, M. (2024) The cost of regulatory
+compliance in the United States. \emph{Cato Institute Research Brief in
+Economic Policy} No.~367.
 \url{https://www.cato.org/research-briefs-economic-policy/cost-regulatory-compliance-united-states}
 
 \bibitem{nzus1983treaty}
-\emph{Double Taxation Relief (United States of America) Order 1983}.
-NZ Treaty Series 1983/13. (Version 10.0 as at 24 December 2009.)
+New Zealand Government. (1983) Double Taxation Relief (United States of
+America) Order 1983. \emph{New Zealand Treaty Series} 1983/13. Version
+10.0 as at 24 December 2009.
 \url{https://www.legislation.govt.nz/regulation/public/1983/0260/latest/DLM93569.html}
 
 \bibitem{chalkidis2022legaltech}
-I.~Chalkidis, A.~Jana, D.~Hartung, M.~Bommarito, I.~Androutsopoulos, D.M.~Katz, N.~Aletras.
-\emph{LexGLUE: A Benchmark Dataset for Legal Language Understanding in English}.
-ACL 2022. \url{https://arxiv.org/abs/2110.00976}
+Chalkidis, I., Jana, A., Hartung, D., Bommarito, M., Androutsopoulos,
+I., Katz, D.M. \& Aletras, N. (2022) LexGLUE: A benchmark dataset for
+legal language understanding in English. In \emph{Proceedings of the 60th
+Annual Meeting of the Association for Computational Linguistics}.
+\url{https://arxiv.org/abs/2110.00976}
 
 \bibitem{katz2023legalNLP}
-D.~Hartung, D.M.~Katz, M.J.~Bommarito, L.~Gerlach, A.~Jana, J.~Soh.
-\emph{Natural Language Processing in the Legal Domain}.
-arXiv:2302.12039, 2023. \url{https://arxiv.org/abs/2302.12039}
+Hartung, D., Katz, D.M., Bommarito, M.J., Gerlach, L., Jana, A. \&
+Soh, J. (2023) Natural language processing in the legal domain.
+\emph{arXiv preprint arXiv:2302.12039}.
+\url{https://arxiv.org/abs/2302.12039}
 
 \bibitem{gvr2024regtech}
-Grand View Research.
-\emph{Regulatory Technology (RegTech) Market Size, Share \& Trends Analysis Report, 2025--2033}.
-2025. \url{https://www.grandviewresearch.com/industry-analysis/regulatory-technology-market}
+Grand View Research. (2025) Regulatory technology (RegTech) market size,
+share \& trends analysis report, 2025--2033.
+\url{https://www.grandviewresearch.com/industry-analysis/regulatory-technology-market}
 
 \bibitem{kira2023}
-Kira Systems.
-\emph{Contract Analysis: How AI Reads Legal Documents}.
-White paper, 2023. \url{https://kirasystems.com/}
+Kira Systems. (2023) Contract analysis: How AI reads legal documents.
+White paper. \url{https://kirasystems.com/}
 
 \bibitem{luminance2022}
-Luminance.
-\emph{Augmenting Legal Review with Machine Learning}.
-Technical white paper, 2022. \url{https://luminance.com/}
+Luminance. (2022) Augmenting legal review with machine learning.
+Technical white paper. \url{https://luminance.com/}
 
 \bibitem{harvey2023}
-Harvey AI.
-\emph{Domain-Specific Legal LLMs at Scale}.
-Product brief, 2023. \url{https://www.harvey.ai/}
+Harvey AI. (2023) Domain-specific legal LLMs at scale. Product brief.
+\url{https://www.harvey.ai/}
 
 \bibitem{spellbook2024}
-Spellbook.
-\emph{AI-Powered Contract Drafting and Review for Lawyers}.
-Pricing and product information, 2024. \url{https://www.spellbook.legal/}
+Spellbook. (2024) AI-powered contract drafting and review for lawyers.
+Pricing and product information. \url{https://www.spellbook.legal/}
 
 \bibitem{zaharia2024compound}
-M.~Zaharia, O.~Khattab, L.~Chen, J.Q.~Davis, H.~Miller, C.~Potts, J.~Zou, M.~Carbin, J.~Frankle, N.~Rao, A.~Ghodsi.
-\emph{The Shift from Models to Compound AI Systems}.
-Berkeley AI Research Blog, 2024.
+Zaharia, M., Khattab, O., Chen, L., Davis, J.Q., Miller, H., Potts, C.,
+Zou, J., Carbin, M., Frankle, J., Rao, N. \& Ghodsi, A. (2024) The shift
+from models to compound AI systems. \emph{Berkeley AI Research Blog}.
 \url{https://bair.berkeley.edu/blog/2024/02/18/compound-ai-systems/}
 
 \bibitem{lewis2020rag}
-P.~Lewis et al.
-\emph{Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks}.
-NeurIPS 2020. \url{https://arxiv.org/abs/2005.11401}
+Lewis, P., Perez, E., Piktus, A., Petroni, F., Karpukhin, V., Goyal, N.,
+K\"uttler, H., Lewis, M., Yih, W., Rockt\"aschel, T., Riedel, S. \&
+Kiela, D. (2020) Retrieval-augmented generation for knowledge-intensive
+NLP tasks. \emph{Advances in Neural Information Processing Systems} 33,
+pp. 9459--9474. \url{https://arxiv.org/abs/2005.11401}
 
 \bibitem{asai2023selfrag}
-A.~Asai, Z.~Wu, Y.~Wang, A.~Sil, H.~Hajishirzi.
-\emph{Self-RAG: Learning to Retrieve, Generate, and Critique Through Self-Reflection}.
-ICLR 2024. \url{https://arxiv.org/abs/2310.11511}
+Asai, A., Wu, Z., Wang, Y., Sil, A. \& Hajishirzi, H. (2024) Self-RAG:
+Learning to retrieve, generate, and critique through self-reflection.
+In \emph{International Conference on Learning Representations (ICLR)}.
+\url{https://arxiv.org/abs/2310.11511}
 
 \bibitem{jiang2023flare}
-Z.~Jiang, F.~Xu, L.~Gao, Z.~Sun, Q.~Liu, J.~Dwivedi-Yu, Y.~Yang, J.~Callan, G.~Neubig.
-\emph{Active Retrieval Augmented Generation}.
-EMNLP 2023. \url{https://arxiv.org/abs/2305.06983}
+Jiang, Z., Xu, F., Gao, L., Sun, Z., Liu, Q., Dwivedi-Yu, J., Yang, Y.,
+Callan, J. \& Neubig, G. (2023) Active retrieval augmented generation.
+In \emph{Proceedings of the 2023 Conference on Empirical Methods in
+Natural Language Processing (EMNLP)}.
+\url{https://arxiv.org/abs/2305.06983}
 
 \bibitem{carbonell1998mmr}
-J.~Carbonell, J.~Goldstein.
-\emph{The use of MMR, diversity-based reranking for reordering documents and producing summaries}.
-SIGIR 1998. \url{https://dl.acm.org/doi/10.1145/290941.291025}
+Carbonell, J. \& Goldstein, J. (1998) The use of MMR, diversity-based
+reranking for reordering documents and producing summaries. In
+\emph{Proceedings of the 21st Annual International ACM SIGIR Conference
+on Research and Development in Information Retrieval}, pp.~335--336.
+\url{https://dl.acm.org/doi/10.1145/290941.291025}
 
 \bibitem{shinn2023reflexion}
-N.~Shinn, F.~Cassano, E.~Berman, A.~Gopinath, K.~Narasimhan, S.~Yao.
-\emph{Reflexion: Language Agents with Verbal Reinforcement Learning}.
-NeurIPS 2023. \url{https://arxiv.org/abs/2303.11366}
+Shinn, N., Cassano, F., Berman, E., Gopinath, A., Narasimhan, K. \&
+Yao, S. (2023) Reflexion: Language agents with verbal reinforcement
+learning. \emph{Advances in Neural Information Processing Systems} 36.
+\url{https://arxiv.org/abs/2303.11366}
 
 \bibitem{manakul2023selfcheckgpt}
-P.~Manakul, A.~Liusie, M.J.F.~Gales.
-\emph{SelfCheckGPT: Zero-Resource Black-Box Hallucination Detection for Generative LLMs}.
-EMNLP 2023. \url{https://arxiv.org/abs/2303.08896}
+Manakul, P., Liusie, A. \& Gales, M.J.F. (2023) SelfCheckGPT:
+Zero-resource black-box hallucination detection for generative LLMs.
+In \emph{Proceedings of the 2023 Conference on Empirical Methods in
+Natural Language Processing (EMNLP)}.
+\url{https://arxiv.org/abs/2303.08896}
 
 \bibitem{guo2024multiagentsurvey}
-T.~Guo et al.
-\emph{Large Language Model Based Multi-Agents: A Survey of Progress and Challenges}.
-arXiv:2402.01680, 2024. \url{https://arxiv.org/abs/2402.01680}
+Guo, T., Chen, X., Wang, Y., Chang, R., Pei, S., Chawla, N.V., Wiest, O.
+\& Zhang, X. (2024) Large language model based multi-agents: A survey of
+progress and challenges. \emph{arXiv preprint arXiv:2402.01680}.
+\url{https://arxiv.org/abs/2402.01680}
 
 \bibitem{wu2023autogen}
-Q.~Wu, G.~Bansal, J.~Zhang, Y.~Wu, S.~Zhang, E.~Zhu, B.~Li, L.~Jiang, X.~Zhang, C.~Wang.
-\emph{AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation Framework}.
-arXiv:2308.08155, 2023. \url{https://arxiv.org/abs/2308.08155}
+Wu, Q., Bansal, G., Zhang, J., Wu, Y., Zhang, S., Zhu, E., Li, B.,
+Jiang, L., Zhang, X. \& Wang, C. (2023) AutoGen: Enabling next-gen LLM
+applications via multi-agent conversation framework. \emph{arXiv
+preprint arXiv:2308.08155}. \url{https://arxiv.org/abs/2308.08155}
 
 \bibitem{yao2022react}
-S.~Yao, J.~Zhao, D.~Yu, N.~Du, I.~Shafran, K.~Narasimhan, Y.~Cao.
-\emph{ReAct: Synergizing Reasoning and Acting in Language Models}.
-ICLR 2023. \url{https://arxiv.org/abs/2210.03629}
+Yao, S., Zhao, J., Yu, D., Du, N., Shafran, I., Narasimhan, K. \&
+Cao, Y. (2023) ReAct: Synergizing reasoning and acting in language
+models. In \emph{International Conference on Learning Representations
+(ICLR)}. \url{https://arxiv.org/abs/2210.03629}
 
 \bibitem{langgraph2024}
-LangChain Team. \emph{LangGraph: Build resilient language agents as graphs}.
-\url{https://langchain-ai.github.io/langgraph/}, accessed 2026.
+LangChain Team. (2024) LangGraph: Build resilient language agents as
+graphs. Software documentation.
+\url{https://langchain-ai.github.io/langgraph/}
 
 \bibitem{du2023debate}
-Y.~Du, S.~Li, A.~Torralba, J.~Tenenbaum, I.~Mordatch.
-\emph{Improving Factuality and Reasoning in Language Models through Multiagent Debate}.
-arXiv:2305.14325, 2023. \url{https://arxiv.org/abs/2305.14325}
+Du, Y., Li, S., Torralba, A., Tenenbaum, J. \& Mordatch, I. (2023)
+Improving factuality and reasoning in language models through multiagent
+debate. \emph{arXiv preprint arXiv:2305.14325}.
+\url{https://arxiv.org/abs/2305.14325}
 
 \bibitem{greshake2023injection}
-K.~Greshake, S.~Abdelnabi, S.~Mishra, C.~Endres, T.~Holz, M.~Fritz.
-\emph{Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection}.
-AISec 2023. \url{https://arxiv.org/abs/2302.12173}
+Greshake, K., Abdelnabi, S., Mishra, S., Endres, C., Holz, T. \&
+Fritz, M. (2023) Not what you've signed up for: Compromising real-world
+LLM-integrated applications with indirect prompt injection. In
+\emph{Proceedings of the 16th ACM Workshop on Artificial Intelligence
+and Security (AISec)}. \url{https://arxiv.org/abs/2302.12173}
 
 \bibitem{liu2024promptinjectionbench}
-Y.~Liu, Y.~Jia, R.~Geng, J.~Jia, N.Z.~Gong.
-\emph{Formalizing and Benchmarking Prompt Injection Attacks and Defenses}.
-USENIX Security 2024. \url{https://arxiv.org/abs/2310.12815}
+Liu, Y., Jia, Y., Geng, R., Jia, J. \& Gong, N.Z. (2024) Formalizing
+and benchmarking prompt injection attacks and defenses. In
+\emph{Proceedings of the 33rd USENIX Security Symposium}.
+\url{https://arxiv.org/abs/2310.12815}
 
 \bibitem{reimers2019sbert}
-N.~Reimers, I.~Gurevych.
-\emph{Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks}.
-EMNLP 2019. \url{https://arxiv.org/abs/1908.10084}
+Reimers, N. \& Gurevych, I. (2019) Sentence-BERT: Sentence embeddings
+using siamese BERT-networks. In \emph{Proceedings of the 2019 Conference
+on Empirical Methods in Natural Language Processing (EMNLP)}.
+\url{https://arxiv.org/abs/1908.10084}
 
 \bibitem{meta2024llama3}
-A.~Grattafiori et al. (Meta Llama team).
-\emph{The Llama 3 Herd of Models}.
-arXiv:2407.21783, 2024. \url{https://arxiv.org/abs/2407.21783}
+Grattafiori, A. et al. (2024) The Llama 3 herd of models. \emph{arXiv
+preprint arXiv:2407.21783}. \url{https://arxiv.org/abs/2407.21783}
 
 \bibitem{deepseek2024v3}
-DeepSeek-AI.
-\emph{DeepSeek-V3 Technical Report}.
-arXiv:2412.19437, 2024. \url{https://arxiv.org/abs/2412.19437}
+DeepSeek-AI. (2024) DeepSeek-V3 technical report. \emph{arXiv preprint
+arXiv:2412.19437}. \url{https://arxiv.org/abs/2412.19437}
 
 \bibitem{es2023ragas}
-S.~Es, J.~James, L.~Espinosa-Anke, S.~Schockaert.
-\emph{RAGAS: Automated Evaluation of Retrieval Augmented Generation}.
-arXiv:2309.15217, 2023. \url{https://arxiv.org/abs/2309.15217}
+Es, S., James, J., Espinosa-Anke, L. \& Schockaert, S. (2023) RAGAS:
+Automated evaluation of retrieval augmented generation. \emph{arXiv
+preprint arXiv:2309.15217}. \url{https://arxiv.org/abs/2309.15217}
+
+\bibitem{wilson1927ci}
+Wilson, E.B. (1927) Probable inference, the law of succession, and
+statistical inference. \emph{Journal of the American Statistical
+Association} \textbf{22}(158):209--212.
 
 \end{thebibliography}
 
@@ -748,8 +1039,10 @@ arXiv:2309.15217, 2023. \url{https://arxiv.org/abs/2309.15217}
 All numerical defaults are gathered in one module so a reviewer can
 diff or reproduce the entire experiment from a single file.
 
-\begin{table}[!ht]
+\begin{table}[H]
 \centering
+\caption{Hyperparameters (verbatim from \texttt{config.py}).}
+\label{tab:hyperparams}
 \small
 \begin{tabular}{lr}
 \toprule
@@ -801,9 +1094,12 @@ diff or reproduce the entire experiment from a single file.
 \section{Test contract set}
 \label{app:tcs}
 
-\begin{table}[!ht]
-\centering\small
-\caption{All 12 evaluation contracts. Adversarial cases are marked with $\star$.}
+Table~\ref{tab:contracts-list} lists all 12 evaluation contracts.
+Adversarial cases (TC-009--TC-012) are marked with $\star$.
+
+\begin{center}\small
+\captionof{table}{All 12 evaluation contracts.}
+\label{tab:contracts-list}
 \begin{tabular}{lll}
 \toprule
 ID & Topic & Planted condition \\
@@ -822,10 +1118,30 @@ TC-011$\star$ & Self-contradictory      & 5\% in clause 2, 15\% in clause 7 \\
 TC-012$\star$ & Excessive length        & Real issues planted at end of long doc \\
 \bottomrule
 \end{tabular}
-\end{table}
+\end{center}
 
-\section{Sample prompt (Junior A, Risk Hunter)}
+\section{Auxiliary UI surface}
+\label{app:ui-aux}
+
+The deployed Streamlit application includes a regulatory \emph{Quick
+Q\&A} surface (Figure~\ref{fig:qa-ui}) that re-uses the same MMR
+retrieval over the regulatory vector store but skips the dual-junior
+and CoVe stages. It is intended for ad-hoc lookup ("What is the NZ--US
+Treaty royalty cap?") rather than full audit, and is not exercised in
+the 48-audit evaluation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{Figure/streamlit_hitl-5.png}
+\caption{The Quick Q\&A surface for ad-hoc regulatory questions over
+the same vector store, complementing the full audit pipeline.}
+\label{fig:qa-ui}
+\end{figure}
+
+\section{Sample prompts}
 \label{app:prompts}
+
+\subsection*{D.1 Junior~A --- Risk Hunter}
 
 \begin{lstlisting}[basicstyle=\ttfamily\footnotesize,breaklines=true]
 SECURITY DIRECTIVE -- READ FIRST AND APPLY THROUGHOUT:
@@ -854,45 +1170,278 @@ For each violation output exactly:
 Max 3 findings. Cite only regulations, never contract clauses.
 \end{lstlisting}
 
-\section{NeurIPS 2025 Reproducibility Checklist}
+\subsection*{D.2 Junior~B --- Compliance Maven}
+
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize,breaklines=true]
+SECURITY DIRECTIVE -- READ FIRST AND APPLY THROUGHOUT:
+(injection-defence banner identical to D.1)
+
+You are a Compliance Maven Auditor. Identify clauses or obligations
+REQUIRED by the regulatory basis that are MISSING or INCOMPLETE in
+the contract.
+
+--- Regulatory Basis (TRUSTED, from internal database) ---
+{context}
+
+<<< UNTRUSTED USER INPUT -- CONTRACT TO AUDIT >>>
+{contract_segment}
+<<< END UNTRUSTED INPUT >>>
+
+For each missing obligation output exactly:
+[Gap N] [HIGH|MED|LOW] "<short description of what is missing>"
+- Why: <one sentence -- which regulation requires it AND why
+  its absence is material>
+- Source: <short citation, e.g. "Article 25, NZ-US Treaty MAP">
+Max 3 findings. Cite only regulations, never contract clauses.
+Do NOT duplicate findings already raised by the Risk Hunter.
+\end{lstlisting}
+
+\subsection*{D.3 Chief Officer --- verified-report synthesis}
+
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize,breaklines=true]
+SECURITY DIRECTIVE -- READ FIRST AND APPLY THROUGHOUT:
+(injection-defence banner identical to D.1)
+
+You are the Chief Compliance Officer producing the FINAL audit report.
+You receive: (i) findings adjudicated by the human reviewer; (ii) each
+finding's citation accompanied by an independent verification status
+in {Verified, Needs Review, Source Not Found}; (iii) live FX context.
+
+Compose the final report with EXACTLY these sections in order:
+  1. EXECUTIVE SUMMARY (<= 60 words, no jargon)
+  2. CRITICAL FINDINGS (HIGH severity, max 5)
+  3. RECOMMENDATIONS (one per finding, actionable)
+  4. CITATIONS (numbered list, copy verification status verbatim)
+
+RULES:
+- Preserve every Verified citation; do NOT silently drop them.
+- Reproduce the trust status next to each citation in CITATIONS.
+- Never claim "fully compliant" if ANY finding remains HIGH.
+- If a finding is unsupported by any Verified citation, demote to
+  "Needs Human Confirmation" -- do not delete it.
+
+--- Adjudicated findings + verification context ---
+{findings_with_status}
+\end{lstlisting}
+
+% =====================================================================
+% NeurIPS Paper Checklist
+% (Official format required by neurips_2025.sty. Section heading kept
+%  verbatim per template instructions; instruction block removed; only
+%  the provided Yes/No/NA macros are used.)
+% =====================================================================
+\section*{NeurIPS Paper Checklist}
 \label{app:checklist}
 
 \begin{enumerate}
-    \item \textbf{Claims in the abstract and introduction match the contributions and scope of the paper.} Yes.
-    \item \textbf{Limitations are discussed.} Yes; see Section~\ref{sec:discussion} (adversarial regression, coverage trade-off, threats to validity).
-    \item \textbf{Theoretical results include complete proofs.} N/A; we present an empirical system.
-    \item \textbf{Experiments are reproducible.} Yes. Code, prompts, hyperparameters
-        (\texttt{config.py}), test fixtures (\texttt{test\_data.py}) and raw
-        per-audit results (JSON + CSV) are released.
-    \item \textbf{Train/test split details given.} N/A; no training, only inference.
-    \item \textbf{All hyperparameters specified.} Yes (Appendix~\ref{app:hyper}).
-    \item \textbf{Statistical significance of results discussed.} Partial:
-        we report exact per-TC pass/fail in Table~\ref{tab:adv}; with $n{=}12$ TCs
-        a formal hypothesis test would be under-powered.
-    \item \textbf{Compute resources for experiments specified.}
-        Apple M2 Mac (16 GB RAM) for Llama; cloud DeepSeek API for DeepSeek backend;
-        ~30 min wall-clock for full 48-audit run.
-    \item \textbf{Code of Conduct / ethics statement included.} Yes
-        (see ``Ethics'' below).
-    \item \textbf{Broader impacts discussed.} Yes (Section~\ref{sec:discussion}).
-    \item \textbf{Safeguards against misuse.} Yes: HITL adjudication is mandatory
-        in the deployed UI; injection-defence banner; soft trust labels prevent
-        false-positive alarmism on \texttt{Source Not Found}.
-    \item \textbf{Licenses of existing assets respected.} Yes.
-        Llama 3.2 (Llama Community License), DeepSeek API (DeepSeek Terms),
-        Frankfurter (CC-BY-SA equivalent), NZ-US treaty (public domain Crown copyright).
-    \item \textbf{New assets documented.} Yes; README and per-module docstrings.
-    \item \textbf{Crowdsourcing experiments / IRB.} N/A; no human-subject data.
-    \item \textbf{LLM usage statement.} ChatGPT/Claude was used for drafting
-        boilerplate prose and consistency-checking LaTeX formatting; all
-        technical claims, code, and experimental results are the author's own work
-        and have been verified against the released artefacts.
-\end{enumerate}
 
-\paragraph{Ethics.} Aletheia is decision-support, not auto-execution: every
-final report passes through human-in-the-loop adjudication before
-counter-party communication. Test contracts are synthetic and contain
-no real-party data. The system explicitly surfaces verification
-uncertainty (\texttt{Source Not Found}) to discourage over-reliance.
+\item {\bf Claims}\\
+Question: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?\\
+Answer: \answerYes{}\\
+Justification: Abstract and Section~\ref{sec:design}--Section~\ref{sec:cost} state and substantiate the compound-architecture, cost-reduction, and adversarial-robustness claims with measured numbers from the 2026-06-15 evaluation run.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the abstract and introduction do not include the claims made in the paper.
+\item The abstract and/or introduction should clearly state the claims made, including the contributions made in the paper and important assumptions and limitations. A No or NA answer to this question will not be perceived well by the reviewers.
+\item The claims made should match theoretical and experimental results, and reflect how much the results can be expected to generalize to other settings.
+\item It is fine to include aspirational goals as motivation as long as it is clear that these goals are not attained by the paper.
+\end{itemize}
+
+\item {\bf Limitations}\\
+Question: Does the paper discuss the limitations of the work performed by the authors?\\
+Answer: \answerYes{}\\
+Justification: Section~\ref{sec:discussion} explicitly discusses the adversarial-robustness regression on DeepSeek, the vacuous-100\% Citation Accuracy / Hallucination Rate readings, the Coverage trade-off, and five enumerated threats to validity (sample size, keyword heuristic, tokenisation, secondary market data, simulated HITL adjudication with unmeasured inter-annotator agreement).\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the paper has no limitation while the answer No means that the paper has limitations, but those are not discussed in the paper.
+\item The authors are encouraged to create a separate ``Limitations'' section in their paper.
+\item The paper should point out any strong assumptions and how robust the results are to violations of these assumptions (e.g., independence assumptions, noiseless settings, model well-specification, asymptotic approximations only holding locally).
+\item The authors should reflect on the scope of the claims made, e.g., if the approach was only tested on a few datasets or with a few runs.
+\item The authors should reflect on the factors that influence the performance of the approach.
+\item The authors should discuss the computational efficiency of the proposed algorithms and how they scale with dataset size.
+\item If applicable, the authors should discuss possible limitations of their approach to address problems of privacy and fairness.
+\item While the authors might fear that complete honesty about limitations might be used by reviewers as grounds for rejection, a worse outcome might be that reviewers discover limitations that aren't acknowledged in the paper.
+\end{itemize}
+
+\item {\bf Theory assumptions and proofs}\\
+Question: For each theoretical result, does the paper provide the full set of assumptions and a complete (and correct) proof?\\
+Answer: \answerNA{}\\
+Justification: The paper presents an empirical system; no theoretical results are claimed.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the paper does not include theoretical results.
+\item All the theorems, formulas, and proofs in the paper should be numbered and cross-referenced.
+\item All assumptions should be clearly stated or referenced in the statement of any theorems.
+\item The proofs can either appear in the main paper or the supplemental material, but if they appear in the supplemental material, the authors are encouraged to provide a short proof sketch to provide intuition.
+\item Inversely, any informal proof provided in the core of the paper should be complemented by formal proofs provided in appendix or supplemental material.
+\item Theorems and Lemmas that the proof relies upon should be properly referenced.
+\end{itemize}
+
+\item {\bf Experimental result reproducibility}\\
+Question: Does the paper fully disclose all the information needed to reproduce the main experimental results of the paper to the extent that it affects the main claims and/or conclusions of the paper?\\
+Answer: \answerYes{}\\
+Justification: All source code, prompts, hyperparameters (\texttt{config.py}, see Appendix~\ref{app:hyper}), the 12-contract evaluation suite (\texttt{test\_data.py}), and the raw 96-audit results (JSON + CSV, including 48 ablation runs) are released at \url{https://github.com/estella-liu11/COMPSCI703_Project_Aletheia}.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the paper does not include experiments.
+\item If the paper includes experiments, a No answer to this question will not be perceived well by the reviewers: Making the paper reproducible is important, regardless of whether the code and data are provided or not.
+\item If the contribution is a dataset and/or model, the authors should describe the steps taken to make their results reproducible or verifiable.
+\item Depending on the contribution, reproducibility can be accomplished in various ways. For example, if the contribution is a novel architecture, describing the architecture fully might suffice, or if the contribution is a specific model and empirical evaluation, it may be necessary to either make it possible for others to replicate the model with the same dataset, or provide access to the model.
+\item While NeurIPS does not require releasing code, the conference does require all submissions to provide some reasonable avenue for reproducibility, which may depend on the nature of the contribution.
+\end{itemize}
+
+\item {\bf Open access to data and code}\\
+Question: Does the paper provide open access to the data and code, with sufficient instructions to faithfully reproduce the main experimental results, as described in supplemental material?\\
+Answer: \answerYes{}\\
+Justification: The GitHub repository above ships pinned dependencies in \texttt{requirements.txt}, a one-page reproduction guide in \texttt{report/README.md}, and a deterministic ingest pipeline (\texttt{ingest.py} with SHA-256 manifest).\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that paper does not include experiments requiring code.
+\item Please see the NeurIPS code and data submission guidelines (\url{https://nips.cc/public/guides/CodeSubmissionPolicy}) for more details.
+\item While we encourage the release of code and data, we understand that this might not be possible, so ``No'' is an acceptable answer.
+\item The instructions should contain the exact command and environment needed to run to reproduce the results.
+\item The authors should provide instructions on data access and preparation, including how to access the raw data, preprocessed data, intermediate data, and generated data, etc.
+\item The authors should provide scripts to reproduce all experimental results for the new proposed method and baselines.
+\item Providing as much information as possible in supplemental material (appended to the paper) is recommended, but including URLs to data and code is permitted.
+\end{itemize}
+
+\item {\bf Experimental setting/details}\\
+Question: Does the paper specify all the training and test details (e.g., data splits, hyperparameters, how they were chosen, type of optimizer, etc.) necessary to understand the results?\\
+Answer: \answerYes{}\\
+Justification: Section~\ref{sec:impl} and Appendix~\ref{app:hyper} list every tunable. No model training is involved; inference temperature is 0 across all backends.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the paper does not include experiments.
+\item The experimental setting should be presented in the core of the paper to a level of detail that is necessary to appreciate the results and make sense of them.
+\item The full details can be provided either with the code, in appendix, or as supplemental material.
+\end{itemize}
+
+\item {\bf Experiment statistical significance}\\
+Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments?\\
+Answer: \answerNo{}\\
+Justification: With $n{=}12$ contracts a formal hypothesis test would be under-powered. We instead report exact per-TC pass/fail in Table~\ref{tab:adv}, mean$\pm$SD in Table~\ref{tab:per_backend}, and Wilson 95\% confidence intervals on the Adversarial Pass Rate; the small sample is flagged as a threat to validity in Section~\ref{sec:discussion}.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the paper does not include experiments.
+\item The authors should answer ``Yes'' if the results are accompanied by error bars, confidence intervals, or statistical significance tests, at least for the experiments that support the main claims of the paper.
+\item The factors of variability that the error bars are capturing should be clearly stated (for example, train/test split, initialization, random drawing of some parameter, or overall run with given experimental conditions).
+\item The method for calculating the error bars should be explained (closed form formula, call to a library function, bootstrap, etc.)
+\item The assumptions made should be given (e.g., Normally distributed errors).
+\item It should be clear whether the error bar is the standard deviation or the standard error of the mean.
+\item It is OK to report 1-sigma error bars, but one should state it.
+\item If error bars are reported in tables or plots, the authors should explain in the text how they were calculated and reference the corresponding figures or tables in the text.
+\end{itemize}
+
+\item {\bf Experiments compute resources}\\
+Question: For each experiment, does the paper provide sufficient information on the computer resources (type of compute workers, memory, time of execution) needed to reproduce the experiments?\\
+Answer: \answerYes{}\\
+Justification: Apple M2 Mac (16~GB RAM) for the Ollama-served Llama~3.2~3B backend; cloud DeepSeek API for the DeepSeek backend; ${\sim}30$~min wall-clock for the 48-audit main evaluation; an additional ${\sim}30$~min for the 24-audit Llama ablation run and ${\sim}5$~min for the 24-audit DeepSeek ablation.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the paper does not include experiments.
+\item The paper should indicate the type of compute workers CPU or GPU, internal cluster, or cloud provider, including relevant memory and storage.
+\item The paper should provide the amount of compute required for each of the individual experimental runs as well as estimate the total compute.
+\item The paper should disclose whether the full research project required more compute than the experiments reported in the paper.
+\end{itemize}
+
+\item {\bf Code of ethics}\\
+Question: Does the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics?\\
+Answer: \answerYes{}\\
+Justification: Aletheia is decision-support, not auto-execution. Every final report passes through human-in-the-loop adjudication. Test contracts are synthetic and contain no real-party data. Verification uncertainty is surfaced as \texttt{Source Not Found} to discourage over-reliance.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the authors have not reviewed the NeurIPS Code of Ethics.
+\item If the authors answer No, they should explain the special circumstances that require a deviation from the Code of Ethics.
+\item The authors should make sure to preserve anonymity (e.g., if there is a special consideration due to laws or regulations in their jurisdiction).
+\end{itemize}
+
+\item {\bf Broader impacts}\\
+Question: Does the paper discuss both potential positive societal impacts and negative societal impacts of the work performed?\\
+Answer: \answerYes{}\\
+Justification: Positive impact (lowering SMB compliance cost) is quantified in Section~\ref{sec:cost}; negative considerations (over-reliance, exposure to injection, sample-size limits) are discussed in Section~\ref{sec:discussion}.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that there is no societal impact of the work performed.
+\item If the authors answer NA or No, they should explain why their work has no societal impact or why the paper does not address societal impact.
+\item Examples of negative societal impacts include potential malicious or unintended uses (e.g., disinformation, generating fake profiles, surveillance), fairness considerations, privacy considerations, and security considerations.
+\item The conference expects that many papers will be foundational research and not tied to particular applications, let alone deployments.
+\item The authors should consider possible harms that could arise when the technology is being used as intended and functioning correctly, harms that could arise when the technology is being used as intended but gives incorrect results, and harms following from (intentional or unintentional) misuse of the technology.
+\item If there are negative societal impacts, the authors could also discuss possible mitigation strategies.
+\end{itemize}
+
+\item {\bf Safeguards}\\
+Question: Does the paper describe safeguards that have been put in place for responsible release of data or models that have a high risk for misuse?\\
+Answer: \answerYes{}\\
+Justification: Mandatory HITL adjudication in the deployed UI; top-of-prompt injection-defence banner across all four LLM call sites; soft three-tier trust labels (\texttt{Verified} / \texttt{Needs Review} / \texttt{Source Not Found}) to prevent false-positive alarmism.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the paper poses no such risks.
+\item Released models that have a high risk for misuse or dual-use should be released with necessary safeguards to allow for controlled use of the model, for example by requiring that users adhere to usage guidelines or restrictions to access the model or implementing safety filters.
+\item Datasets that have been scraped from the Internet could pose safety risks. The authors should describe how they avoided releasing unsafe images.
+\item We recognize that providing effective safeguards is challenging, and many papers do not require this, but we encourage authors to take this into account and make a best faith effort.
+\end{itemize}
+
+\item {\bf Licenses for existing assets}\\
+Question: Are the creators or original owners of assets (e.g., code, data, models), used in the paper, properly credited and are the license and terms of use explicitly mentioned and properly respected?\\
+Answer: \answerYes{}\\
+Justification: Llama~3.2 under the Llama Community License; DeepSeek API under DeepSeek Terms; Frankfurter under CC-BY-SA-equivalent terms; the NZ--US Double Taxation Convention text is NZ Crown copyright (public-sector public-availability).\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the paper does not use existing assets.
+\item The authors should cite the original paper that produced the code package or dataset.
+\item The authors should state which version of the asset is used and, if possible, include a URL.
+\item The name of the license (e.g., CC-BY 4.0) should be included for each asset.
+\item For scraped data from a particular source (e.g., website), the copyright and terms of service of that source should be provided.
+\item If assets are released, the license, copyright information, and terms of use in the package should be provided.
+\item For existing datasets that are re-packaged, both the original license and the license of the derived asset (if it has changed) should be provided.
+\item If this information is not available online, the authors are encouraged to reach out to the asset's creators.
+\end{itemize}
+
+\item {\bf New assets}\\
+Question: Are new assets introduced in the paper well documented and is the documentation provided alongside the assets?\\
+Answer: \answerYes{}\\
+Justification: Per-module docstrings, a project \texttt{README.md}, a separate \texttt{report/README.md} reproduction guide, and inline TikZ-rendered architecture diagrams.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the paper does not release new assets.
+\item Researchers should communicate the details of the dataset/code/model as part of their submissions via structured templates. This includes details about training, license, limitations, etc.
+\item The paper should discuss whether and how consent was obtained from people whose asset is used.
+\item At submission time, remember to anonymize your assets (if applicable). You can either create an anonymized URL or include an anonymized zip file.
+\end{itemize}
+
+\item {\bf Crowdsourcing and research with human subjects}\\
+Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)?\\
+Answer: \answerNA{}\\
+Justification: No crowdsourcing and no human-subject data are involved.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the paper does not involve crowdsourcing nor research with human subjects.
+\item Including this information in the supplemental material is fine, but if the main contribution of the paper involves human subjects, then as much detail as possible should be included in the main paper.
+\item According to the NeurIPS Code of Ethics, workers involved in data collection, curation, or other labor should be paid at least the minimum wage in the country of the data collector.
+\end{itemize}
+
+\item {\bf Institutional review board (IRB) approvals or equivalent for research with human subjects}\\
+Question: Does the paper describe potential risks incurred by study participants, whether such risks were disclosed to the subjects, and whether Institutional Review Board (IRB) approvals (or an equivalent approval/review based on the requirements of your country or institution) were obtained?\\
+Answer: \answerNA{}\\
+Justification: No human subjects are involved; no IRB review was required.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the paper does not involve crowdsourcing nor research with human subjects.
+\item Depending on the country in which research is conducted, IRB approval (or equivalent) may be required for any human subjects research. If you obtained IRB approval, you should clearly state this in the paper.
+\item We recognize that the procedures for this may vary significantly between institutions and locations, and we expect authors to adhere to the NeurIPS Code of Ethics and the guidelines for their institution.
+\item For initial submissions, do not include any information that would break anonymity (if applicable), such as the institution conducting the review.
+\end{itemize}
+
+\item {\bf Declaration of LLM usage}\\
+Question: Does the paper describe the usage of LLMs if it is an important, original, or non-standard component of the core methods in this research? Note that if the LLM is used only for writing, editing, or formatting purposes and does not impact the core methodology, scientific rigorousness, or originality of the research, declaration is not required.\\
+Answer: \answerYes{}\\
+Justification: LLMs (Llama~3.2~3B and DeepSeek-V3) are \emph{themselves} the core inference engines under evaluation; their roles, prompts, and configurations are fully described in Section~\ref{sec:design}, Section~\ref{sec:impl}, and Appendix~\ref{app:prompts}. Conversational LLM assistance was additionally used for drafting boilerplate prose and LaTeX consistency checking; all technical claims, code, and experimental results are the author's own work and have been verified against the released artefacts.\\
+Guidelines:
+\begin{itemize}
+\item The answer NA means that the core method development in this research does not involve LLMs as any important, original, or non-standard components.
+\item Please refer to our LLM policy (\url{https://neurips.cc/Conferences/2025/LLM}) for what should or should not be described.
+\end{itemize}
+
+\end{enumerate}
 
 \end{document}

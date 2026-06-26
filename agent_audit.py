@@ -243,14 +243,29 @@ YOUR JOB
    - Is a duplicate of another finding.
 
 4. For each surviving finding, check its citation against the VERIFICATION
-   CONTEXT and pick exactly ONE trust label:
-   - "Verified"          → the citation appears clearly in the verification
-                           context; the regulation it names is the right one.
-   - "Needs Review"      → the citation matches a related but not identical
-                           regulation, OR the verification context only
-                           partially confirms it.
-   - "Source Not Found"  → the cited regulation cannot be located in the
-                           verification context at all.
+   CONTEXT and pick exactly ONE trust label using these DECISIVE rules:
+
+   - "Verified" → the verification context contains text that names the
+                  SAME article/section/clause cited (e.g. citation says
+                  "Article 12, NZ-US Treaty" AND verification context
+                  contains "Article 12" with NZ-US treaty content).
+                  Do NOT downgrade to "Needs Review" just because the
+                  wording isn't identical — semantic match on the same
+                  legal provision IS Verified.
+
+   - "Needs Review" → the verification context discusses a RELATED but
+                      different provision (e.g. citation says "Article 12"
+                      but evidence is about "Article 10" of the same
+                      treaty), OR the verification context is about the
+                      right topic but in a different jurisdiction.
+
+   - "Source Not Found" → the verification context contains NO content
+                          that mentions the cited article OR the topic
+                          of the cited regulation. Pure absence of evidence.
+
+   CALIBRATION: prefer "Verified" when the evidence is reasonable; the
+   user is told a "Verified" label still requires their professional
+   judgment. Over-using "Needs Review" defeats the purpose of CoVe.
 
    IMPORTANT: a "Source Not Found" label does NOT mean the contract is
    non-compliant. It only means the AI could not independently confirm
@@ -549,6 +564,21 @@ def _cove_enabled():
     return os.getenv("COVE_ENABLED", "true").strip().lower() not in ("false", "0", "no")
 
 
+def _verify_mode():
+    """Three-way ablation switch for the post-HITL verification stage.
+
+    VERIFY_MODE=cove   (default)  → Chain-of-Verification re-questioning
+    VERIFY_MODE=simple             → Naïve re-retrieval (legacy baseline)
+    VERIFY_MODE=none               → No verification at all (ablation)
+
+    For backwards compat, COVE_ENABLED=false still maps to "simple".
+    """
+    mode = os.getenv("VERIFY_MODE", "").strip().lower()
+    if mode in ("cove", "simple", "none"):
+        return mode
+    return "cove" if _cove_enabled() else "simple"
+
+
 # ========================================================
 # 5b. Simple per-citation re-retrieve (legacy / ablation baseline)
 # ========================================================
@@ -638,10 +668,13 @@ def _gather_citations(junior_a_output, junior_b_output, user_decision):
 
 
 def _verify_citations_block(citations):
-    """CoVe (default) or simple re-retrieve, depending on COVE_ENABLED."""
+    """Three-way: CoVe / simple re-retrieve / no verification (ablation)."""
     if not citations:
         return "(No citations to verify — Junior(s) found no issues.)"
-    if _cove_enabled():
+    mode = _verify_mode()
+    if mode == "none":
+        return "(Verification disabled for ablation — citations passed through.)"
+    if mode == "cove":
         return cove_verify_citations(citations)
     return re_retrieve_citations(citations)
 

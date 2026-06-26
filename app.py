@@ -42,7 +42,10 @@ import db
 
 _FINDING_BOUNDARY_RE = re.compile(r'^\s*\[(\d+)\]\s*', re.MULTILINE)
 _FIRST_LINE_RE = re.compile(
-    r'\[(HIGH|MED|LOW)\]\s*\[(Verified|Needs Review|Source Not Found)\]\s*"([^"]+)"',
+    # Brackets around severity and trust label are both optional, to
+    # tolerate the LLM emitting either "[HIGH] [Needs Review]" or
+    # "HIGH Needs Review" — both are observed in practice.
+    r'\[?(HIGH|MED|LOW)\]?\s*\[?(Verified|Needs Review|Source Not Found)\]?\s*"([^"]+)"',
     re.IGNORECASE,
 )
 _FIX_RE = re.compile(r'Fix:\s*([^\n]+)', re.IGNORECASE)
@@ -55,9 +58,9 @@ _SEVERITY_RENDER = {
 }
 
 _TRUST_BADGE = {
-    "Verified":         "✅ Verified",
-    "Needs Review":     "🟠 Needs Review",
-    "Source Not Found": "❔ Source Not Found",
+    "Verified":         ":green[**✓ Verified**]",
+    "Needs Review":     ":orange[**⚠ Needs Review**]",
+    "Source Not Found": ":red[**✗ Source Not Found**]",
 }
 
 
@@ -129,6 +132,13 @@ def render_audit_report(report):
     tail = report[blocks[-1].end():]
     tail = re.sub(r'^\s*"[^"]*"\s*\n?', '', tail)  # drop the closing clause we already showed
     tail = re.sub(r'^.*?(Fix:|Source:).*$', '', tail, flags=re.MULTILINE)
+    # Drop any stray finding-shaped lines the LLM duplicated outside the [N] structure
+    tail = re.sub(
+        r'^\s*\[?(HIGH|MED|LOW)\]?\s+\[?(Verified|Needs Review|Source Not Found)\]?\s*"[^"]*"\s*$',
+        '',
+        tail,
+        flags=re.MULTILINE | re.IGNORECASE,
+    )
     tail = tail.strip()
     if tail:
         st.markdown(tail)
@@ -136,11 +146,11 @@ def render_audit_report(report):
     # Trust-label explainer — addresses Group 15's "trust paradox".
     with st.expander("ℹ️ What do the trust labels mean?"):
         st.markdown(
-            "- **✅ Verified** — The cited regulation was independently "
+            "- :green[**✓ Verified**] — The cited regulation was independently "
             "confirmed by re-querying the regulatory database.\n"
-            "- **🟠 Needs Review** — The citation partially matches a "
+            "- :orange[**⚠ Needs Review**] — The citation partially matches a "
             "related regulation. Worth double-checking, but not necessarily wrong.\n"
-            "- **❔ Source Not Found** — The AI could not locate the cited "
+            "- :red[**✗ Source Not Found**] — The AI could not locate the cited "
             "regulation in its database. **This does NOT mean the contract "
             "is non-compliant** — it only means the AI couldn't verify "
             "this specific citation. Confirm with a compliance professional."
@@ -327,8 +337,8 @@ with st.sidebar:
 # ═══════════════════════════════════════════════════════
 # Three tabs: Audit | Quick Q&A | My History
 # ═══════════════════════════════════════════════════════
-tab_audit, tab_qa, tab_history = st.tabs(
-    ["📤 Contract Audit", "💬 Quick Q&A", "📜 My History"]
+tab_audit, tab_qa, tab_history, tab_pricing = st.tabs(
+    ["📤 Contract Audit", "💬 Quick Q&A", "📜 My History", "💎 Pricing"]
 )
 
 # ───────────────────────────────────────────────────────
@@ -357,7 +367,8 @@ with tab_audit:
                     st.session_state.contract_text = contract_text
                     st.session_state.uploaded_file_name = uploaded_file.name
                     st.session_state.audit_saved = False
-                    with st.spinner("⏳ Dual auditors analyzing... (~90s)"):
+                    _eta_juniors = "~5s" if get_backend_name() == DEEPSEEK else "~30s"
+                    with st.spinner(f"⏳ Dual auditors analyzing... ({_eta_juniors})"):
                         result = run_dual_juniors(contract_text[:1500])
                         st.session_state.junior_results = result
                         st.session_state.stage = "review"
@@ -400,7 +411,8 @@ with tab_audit:
         col1, col2 = st.columns([3, 1])
         with col1:
             if st.button("👨‍⚖️ Continue to Chief Officer", type="primary"):
-                with st.spinner("⏳ Chief verifying citations... (~60s)"):
+                _eta_chief = "~5s" if get_backend_name() == DEEPSEEK else "~20s"
+                with st.spinner(f"⏳ Chief verifying citations... ({_eta_chief})"):
                     final = run_chief_officer(
                         junior_a_output=juniors["junior_a_output"],
                         junior_b_output=juniors["junior_b_output"],
@@ -539,3 +551,88 @@ with tab_history:
                     mime="text/plain",
                     key=f"dl_{row['id']}",
                 )
+
+# ───────────────────────────────────────────────────────
+# Tab 4: Pricing
+# ───────────────────────────────────────────────────────
+with tab_pricing:
+    st.markdown(
+        "<h2 style='text-align:center; margin-bottom:0.2em;'>"
+        "Simple, flexible pricing for every business."
+        "</h2>",
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "<p style='text-align:center; color:#888;'>"
+        "Pick the tier that matches your contract volume. "
+        "Upgrade or cancel anytime."
+        "</p>",
+        unsafe_allow_html=True,
+    )
+    st.write("")
+
+    col_basic, col_pro, col_ent = st.columns(3, gap="medium")
+
+    # ── Basic ──
+    with col_basic:
+        with st.container(border=True):
+            st.markdown("#### Basic")
+            st.markdown("### $199<span style='color:#888;font-size:0.6em;'> / month</span>",
+                        unsafe_allow_html=True)
+            st.write("")
+            st.markdown(
+                "- 50 audits / month\n"
+                "- Access to key global jurisdictions\n"
+                "- Standard email support\n"
+                "- Audit trail logs"
+            )
+            st.write("")
+            st.button("Choose Basic", key="pick_basic", use_container_width=True)
+
+    # ── Professional (highlighted) ──
+    with col_pro:
+        with st.container(border=True):
+            st.markdown(
+                "<div style='text-align:center; color:#22c55e; font-weight:600;"
+                " font-size:0.85em; margin-bottom:0.3em;'>★ MOST POPULAR</div>",
+                unsafe_allow_html=True,
+            )
+            st.markdown("#### Professional")
+            st.markdown("### $499<span style='color:#888;font-size:0.6em;'> / month</span>",
+                        unsafe_allow_html=True)
+            st.write("")
+            st.markdown(
+                "- 200 audits / month\n"
+                "- All Basic features\n"
+                "- Multi-jurisdiction knowledge base\n"
+                "- Agentic CoVe verification\n"
+                "- 24/7 expert availability"
+            )
+            st.write("")
+            st.button("Choose Professional", key="pick_pro",
+                      type="primary", use_container_width=True)
+
+    # ── Enterprise ──
+    with col_ent:
+        with st.container(border=True):
+            st.markdown("#### Enterprise")
+            st.markdown("### $1,999<span style='color:#888;font-size:0.6em;'> / month</span>",
+                        unsafe_allow_html=True)
+            st.write("")
+            st.markdown(
+                "- Unlimited audits\n"
+                "- All Professional features\n"
+                "- Air-gapped Llama deployment\n"
+                "- White-labelling & SSO\n"
+                "- Dedicated support pipeline"
+            )
+            st.write("")
+            st.button("Contact Sales", key="pick_ent", use_container_width=True)
+
+    st.write("")
+    st.divider()
+    st.caption(
+        "**Competitor benchmark:** Spellbook charges USD 300+/user/month. "
+        "Aletheia targets the underserved NZ–US SMB tier with volume-based pricing. "
+        "All tiers include human-in-the-loop adjudication and per-citation trust labels."
+    )
